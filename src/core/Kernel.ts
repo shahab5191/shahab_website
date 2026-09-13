@@ -1,6 +1,6 @@
-import type { Shell } from './Shell';
-import { getCommand, type CommandContext } from './commands';
-import type { Graphics, KeyEvent, Process, SystemArgs } from './types';
+import type { Shell } from "./Shell";
+import { getCommand, type CommandContext } from "./commands";
+import type { Graphics, KeyEvent, Process, SystemArgs } from "./types";
 
 /**
  * The OS Kernel: a small state machine that routes input to either the shell
@@ -73,7 +73,7 @@ export class Kernel {
     this.shell.writeLine(`${this.shell.prompt}${line}`);
     const trimmed = line.trim();
 
-    if (trimmed === '') {
+    if (trimmed === "") {
       this.shell.redraw();
       return;
     }
@@ -82,7 +82,7 @@ export class Kernel {
     const command = name !== undefined ? getCommand(name) : undefined;
 
     if (!command) {
-      this.shell.writeLine(`command not found: ${name ?? ''}`);
+      this.shell.writeLine(`command not found: ${name ?? ""}`);
       this.shell.redraw();
       return;
     }

@@ -39,11 +39,17 @@ export interface Graphics {
   /** Height of a single character cell in pixels. */
   readonly cellHeight: number;
 
-  drawText(col: number, row: number, text: string, color?: string): void;
-  drawRect(x: number, y: number, w: number, h: number, color?: string): void;
-  drawCircle(x: number, y: number, radius: number, color?: string): void;
-  setPixel(x: number, y: number, color?: string): void;
-  clearScreen(color?: string): void;
+  drawText(col: number, row: number, text: string, color?: RetroColor): void;
+  drawRect(
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    color?: RetroColor,
+  ): void;
+  drawCircle(x: number, y: number, radius: number, color?: RetroColor): void;
+  setPixel(x: number, y: number, color?: RetroColor): void;
+  clearScreen(color?: RetroColor): void;
 }
 
 /** Arguments the OS passes to a process on spawn. */
@@ -87,8 +93,8 @@ export const Colors = {
   MediumGrey: "#6C6C6C",
   LightGreen: "#9AD284",
   LightBlue: "#6C5EB5",
-  LightGrey: "#959595"
-}
+  LightGrey: "#959595",
+} as const;
 
 /** Named color palette shared across the terminal. */
 export const Palette = {
@@ -98,4 +104,4 @@ export const Palette = {
   dim: Colors.DarkGrey,
 } as const;
 
-
+export type RetroColor = (typeof Colors)[keyof typeof Colors];

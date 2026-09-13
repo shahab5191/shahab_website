@@ -1,7 +1,7 @@
-import type { Graphics } from './types';
-import { Palette } from './types';
-import type { BitmapFont } from './BitmapFont';
-import { vga8x16 } from './fonts/vga8x16';
+import type { Graphics, RetroColor } from "./types";
+import { Palette } from "./types";
+import type { BitmapFont } from "./BitmapFont";
+import { vga8x16 } from "./fonts/vga8x16";
 
 export interface TerminalGraphicsOptions {
   cols?: number;
@@ -23,11 +23,11 @@ const CONNECTING_END = 0xdf;
 function buildGlyphAtlas(font: BitmapFont): HTMLCanvasElement {
   const atlasWidth = 16 * font.cellWidth;
   const atlasHeight = 16 * font.cellHeight;
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = atlasWidth;
   canvas.height = atlasHeight;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('TerminalGraphics: could not build glyph atlas');
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("TerminalGraphics: could not build glyph atlas");
   const image = ctx.createImageData(atlasWidth, atlasHeight);
 
   for (let code = 0; code < 256; code++) {
@@ -38,7 +38,11 @@ function buildGlyphAtlas(font: BitmapFont): HTMLCanvasElement {
       const bits = glyph?.[py] ?? 0;
       for (let px = 0; px < font.glyphWidth; px++) {
         if (bits & (0x80 >> px)) {
-          const offset = ((row * font.cellHeight + py) * atlasWidth + col * font.cellWidth + px) * 4;
+          const offset =
+            ((row * font.cellHeight + py) * atlasWidth +
+              col * font.cellWidth +
+              px) *
+            4;
           image.data[offset] = 255;
           image.data[offset + 1] = 255;
           image.data[offset + 2] = 255;
@@ -47,10 +51,17 @@ function buildGlyphAtlas(font: BitmapFont): HTMLCanvasElement {
       }
       // Extend the rightmost column into the spacing column for box-drawing
       // glyphs so horizontal lines connect seamlessly.
-      if (font.cellWidth > font.glyphWidth && code >= CONNECTING_START && code <= CONNECTING_END) {
+      if (
+        font.cellWidth > font.glyphWidth &&
+        code >= CONNECTING_START &&
+        code <= CONNECTING_END
+      ) {
         if (bits & 0x01) {
           const offset =
-            ((row * font.cellHeight + py) * atlasWidth + col * font.cellWidth + font.glyphWidth) * 4;
+            ((row * font.cellHeight + py) * atlasWidth +
+              col * font.cellWidth +
+              font.glyphWidth) *
+            4;
           image.data[offset] = 255;
           image.data[offset + 1] = 255;
           image.data[offset + 2] = 255;
@@ -97,12 +108,12 @@ export class TerminalGraphics implements Graphics {
     this.width = this.cols * this.cellWidth;
     this.height = this.rows * this.cellHeight;
 
-    this.canvas = document.createElement('canvas');
+    this.canvas = document.createElement("canvas");
     this.canvas.width = this.width;
     this.canvas.height = this.height;
 
-    const ctx = this.canvas.getContext('2d', { alpha: false });
-    if (!ctx) throw new Error('TerminalGraphics: could not acquire 2D context');
+    const ctx = this.canvas.getContext("2d", { alpha: false });
+    if (!ctx) throw new Error("TerminalGraphics: could not acquire 2D context");
     this.ctx = ctx;
     this.ctx.imageSmoothingEnabled = false;
 
@@ -132,7 +143,12 @@ export class TerminalGraphics implements Graphics {
     this._isDirty = true;
   }
 
-  drawText(col: number, row: number, text: string, color: string = Palette.foreground): void {
+  drawText(
+    col: number,
+    row: number,
+    text: string,
+    color: RetroColor = Palette.foreground,
+  ): void {
     const atlas = this.tintedAtlas(color);
     let x = col * this.cellWidth;
     const y = row * this.cellHeight;
@@ -159,13 +175,24 @@ export class TerminalGraphics implements Graphics {
     this.markDirty();
   }
 
-  drawRect(x: number, y: number, w: number, h: number, color: string = Palette.foreground): void {
+  drawRect(
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    color: RetroColor = Palette.foreground,
+  ): void {
     this.ctx.fillStyle = color;
     this.ctx.fillRect(x, y, w, h);
     this.markDirty();
   }
 
-  drawCircle(x: number, y: number, radius: number, color: string = Palette.foreground): void {
+  drawCircle(
+    x: number,
+    y: number,
+    radius: number,
+    color: RetroColor = Palette.foreground,
+  ): void {
     this.ctx.strokeStyle = color;
     this.ctx.lineWidth = 1;
     this.ctx.beginPath();
@@ -174,31 +201,31 @@ export class TerminalGraphics implements Graphics {
     this.markDirty();
   }
 
-  setPixel(x: number, y: number, color: string = Palette.foreground): void {
+  setPixel(x: number, y: number, color: RetroColor = Palette.foreground): void {
     this.ctx.fillStyle = color;
     this.ctx.fillRect(Math.floor(x), Math.floor(y), 1, 1);
     this.markDirty();
   }
 
-  clearScreen(color: string = Palette.background): void {
+  clearScreen(color: RetroColor = Palette.background): void {
     this.ctx.fillStyle = color;
     this.ctx.fillRect(0, 0, this.width, this.height);
     this.markDirty();
   }
 
   /** Lazily build (and cache) a color-tinted copy of the white glyph atlas. */
-  private tintedAtlas(color: string): HTMLCanvasElement {
+  private tintedAtlas(color: RetroColor): HTMLCanvasElement {
     const cached = this.atlasCache.get(color);
     if (cached) return cached;
 
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
     canvas.width = this.atlas.width;
     canvas.height = this.atlas.height;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('TerminalGraphics: could not tint glyph atlas');
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("TerminalGraphics: could not tint glyph atlas");
     ctx.fillStyle = color;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.globalCompositeOperation = 'destination-in';
+    ctx.globalCompositeOperation = "destination-in";
     ctx.drawImage(this.atlas, 0, 0);
 
     this.atlasCache.set(color, canvas);

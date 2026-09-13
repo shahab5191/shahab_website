@@ -1,14 +1,14 @@
-import type { Graphics, KeyEvent } from './types';
-import { Palette } from './types';
+import type { Graphics, KeyEvent } from "./types";
+import { Palette } from "./types";
 
 const MAX_SCROLLBACK = 500;
 
 /** Split text into display rows, hard-wrapping at `width` columns. */
 export function wrapText(text: string, width: number): string[] {
   const out: string[] = [];
-  for (const raw of text.split('\n')) {
+  for (const raw of text.split("\n")) {
     if (raw.length === 0) {
-      out.push('');
+      out.push("");
       continue;
     }
     for (let i = 0; i < raw.length; i += width) {
@@ -26,15 +26,15 @@ export function wrapText(text: string, width: number): string[] {
  * execution via the `onCommand` callback (wired by the Kernel).
  */
 export class Shell {
-  readonly prompt = '> ';
+  readonly prompt = "> ";
 
   private graphics: Graphics;
   private lines: string[] = [];
-  private buffer = '';
+  private buffer = "";
   private cursor = 0;
   private history: string[] = [];
   private historyIndex = -1;
-  private draft = '';
+  private draft = "";
 
   /** Set by the Kernel. Invoked with the raw input line on Enter. */
   onCommand: (line: string) => void = () => {};
@@ -60,13 +60,13 @@ export class Shell {
 
   clear(): void {
     this.lines = [];
-    this.buffer = '';
+    this.buffer = "";
     this.cursor = 0;
     this.redraw();
   }
 
   /** Append a line (wrapped) to the scrollback. */
-  writeLine(text = ''): void {
+  writeLine(text = ""): void {
     for (const chunk of wrapText(text, this.graphics.cols)) {
       this.lines.push(chunk);
     }
@@ -83,39 +83,46 @@ export class Shell {
     }
 
     switch (key) {
-      case 'Enter':
+      case "Enter":
         this.submit();
         return;
-      case 'Backspace':
+      case "Backspace":
         if (this.cursor > 0) {
-          this.buffer = this.buffer.slice(0, this.cursor - 1) + this.buffer.slice(this.cursor);
+          this.buffer =
+            this.buffer.slice(0, this.cursor - 1) +
+            this.buffer.slice(this.cursor);
           this.cursor -= 1;
         }
         break;
-      case 'ArrowLeft':
+      case "ArrowLeft":
         this.cursor = Math.max(0, this.cursor - 1);
         break;
-      case 'ArrowRight':
+      case "ArrowRight":
         this.cursor = Math.min(this.buffer.length, this.cursor + 1);
         break;
-      case 'ArrowUp':
+      case "ArrowUp":
         this.historyBack();
         break;
-      case 'ArrowDown':
+      case "ArrowDown":
         this.historyForward();
         break;
-      case 'Home':
+      case "Home":
         this.cursor = 0;
         break;
-      case 'End':
+      case "End":
         this.cursor = this.buffer.length;
         break;
-      case 'Delete':
-        this.buffer = this.buffer.slice(0, this.cursor) + this.buffer.slice(this.cursor + 1);
+      case "Delete":
+        this.buffer =
+          this.buffer.slice(0, this.cursor) +
+          this.buffer.slice(this.cursor + 1);
         break;
       default:
         if (key.length === 1) {
-          this.buffer = this.buffer.slice(0, this.cursor) + key + this.buffer.slice(this.cursor);
+          this.buffer =
+            this.buffer.slice(0, this.cursor) +
+            key +
+            this.buffer.slice(this.cursor);
           this.cursor += 1;
         }
         break;
@@ -131,7 +138,7 @@ export class Shell {
     const maxOutputRows = g.rows - 1;
     const start = Math.max(0, this.lines.length - maxOutputRows);
     for (let i = start; i < this.lines.length; i++) {
-      g.drawText(0, i - start, this.lines[i] ?? '', Palette.foreground);
+      g.drawText(0, i - start, this.lines[i] ?? "", Palette.foreground);
     }
 
     const promptRow = g.rows - 1;
@@ -139,7 +146,13 @@ export class Shell {
     g.drawText(this.prompt.length, promptRow, this.buffer, Palette.foreground);
 
     const cursorCol = this.prompt.length + this.cursor;
-    g.drawRect(cursorCol * g.cellWidth, promptRow * g.cellHeight, g.cellWidth, g.cellHeight, Palette.foreground);
+    g.drawRect(
+      cursorCol * g.cellWidth,
+      promptRow * g.cellHeight,
+      g.cellWidth,
+      g.cellHeight,
+      Palette.foreground,
+    );
     const charUnder = this.buffer[this.cursor];
     if (charUnder) {
       g.drawText(cursorCol, promptRow, charUnder, Palette.background);
@@ -148,10 +161,10 @@ export class Shell {
 
   private submit(): void {
     const line = this.buffer;
-    this.buffer = '';
+    this.buffer = "";
     this.cursor = 0;
     this.historyIndex = -1;
-    if (line.trim() !== '' && this.history[this.history.length - 1] !== line) {
+    if (line.trim() !== "" && this.history[this.history.length - 1] !== line) {
       this.history.push(line);
     }
     this.onCommand(line);
@@ -159,17 +172,17 @@ export class Shell {
 
   private handleCtrlKey(key: string): void {
     switch (key) {
-      case 'w':
+      case "w":
         this.deleteWordBeforeCursor();
         break;
-      case 'u':
+      case "u":
         this.buffer = this.buffer.slice(this.cursor);
         this.cursor = 0;
         break;
-      case 'a':
+      case "a":
         this.cursor = 0;
         break;
-      case 'e':
+      case "e":
         this.cursor = this.buffer.length;
         break;
       default:
@@ -182,7 +195,9 @@ export class Shell {
     const before = this.buffer.slice(0, this.cursor);
     const match = before.match(/(\S+)$/);
     if (match) {
-      this.buffer = before.slice(0, before.length - match[0].length) + this.buffer.slice(this.cursor);
+      this.buffer =
+        before.slice(0, before.length - match[0].length) +
+        this.buffer.slice(this.cursor);
       this.cursor -= match[0].length;
     }
   }
@@ -195,7 +210,7 @@ export class Shell {
     } else if (this.historyIndex > 0) {
       this.historyIndex -= 1;
     }
-    this.buffer = this.history[this.historyIndex] ?? '';
+    this.buffer = this.history[this.historyIndex] ?? "";
     this.cursor = this.buffer.length;
   }
 
@@ -203,7 +218,7 @@ export class Shell {
     if (this.historyIndex === -1) return;
     if (this.historyIndex < this.history.length - 1) {
       this.historyIndex += 1;
-      this.buffer = this.history[this.historyIndex] ?? '';
+      this.buffer = this.history[this.historyIndex] ?? "";
     } else {
       this.historyIndex = -1;
       this.buffer = this.draft;

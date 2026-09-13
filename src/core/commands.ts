@@ -1,6 +1,6 @@
-import type { Graphics } from './types';
-import type { Kernel } from './Kernel';
-import type { Shell } from './Shell';
+import type { Graphics } from "./types";
+import type { Kernel } from "./Kernel";
+import type { Shell } from "./Shell";
 
 /** Context handed to a command when it runs. */
 export interface CommandContext {
@@ -30,29 +30,29 @@ export function commandNames(): string[] {
 // Built-in commands
 // ---------------------------------------------------------------------------
 
-registerCommand('help', (ctx) => {
-  ctx.shell.writeLine('available commands:');
+registerCommand("help", (ctx) => {
+  ctx.shell.writeLine("available commands:");
   for (const name of commandNames()) {
     ctx.shell.writeLine(`  ${name}`);
   }
 });
 
-registerCommand('clear', (ctx) => {
+registerCommand("clear", (ctx) => {
   ctx.shell.clear();
 });
 
-registerCommand('echo', (ctx) => {
-  ctx.shell.writeLine(ctx.args.join(' '));
+registerCommand("echo", (ctx) => {
+  ctx.shell.writeLine(ctx.args.join(" "));
 });
 
-registerCommand('about', (ctx) => {
-  ctx.shell.writeLine('CRT terminal portfolio');
-  ctx.shell.writeLine('a WebGL-powered virtual OS');
-  ctx.shell.writeLine('');
-  ctx.shell.writeLine('type `help` for commands, `demo` to run a process.');
+registerCommand("about", (ctx) => {
+  ctx.shell.writeLine("CRT terminal portfolio");
+  ctx.shell.writeLine("a WebGL-powered virtual OS");
+  ctx.shell.writeLine("");
+  ctx.shell.writeLine("type `help` for commands, `demo` to run a process.");
 });
 
-registerCommand('ui', (ctx) => {
-  ctx.shell.writeLine('transitioning to modern UI...');
+registerCommand("ui", (ctx) => {
+  ctx.shell.writeLine("transitioning to modern UI...");
   ctx.kernel.requestUi();
 });
