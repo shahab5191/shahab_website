@@ -192,12 +192,17 @@ export class TerminalGraphics implements Graphics {
     y: number,
     radius: number,
     color: RetroColor = Palette.foreground,
+    fill: boolean = false,
   ): void {
     this.ctx.strokeStyle = color;
+    this.ctx.fillStyle = color;
     this.ctx.lineWidth = 1;
     this.ctx.beginPath();
     this.ctx.arc(x, y, radius, 0, Math.PI * 2);
     this.ctx.stroke();
+    if (fill) {
+      this.ctx.fill();
+    }
     this.markDirty();
   }
 

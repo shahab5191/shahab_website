@@ -47,7 +47,13 @@ export interface Graphics {
     h: number,
     color?: RetroColor,
   ): void;
-  drawCircle(x: number, y: number, radius: number, color?: RetroColor): void;
+  drawCircle(
+    x: number,
+    y: number,
+    radius: number,
+    color?: RetroColor,
+    fill?: boolean,
+  ): void;
   setPixel(x: number, y: number, color?: RetroColor): void;
   clearScreen(color?: RetroColor): void;
 }

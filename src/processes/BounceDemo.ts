@@ -1,5 +1,5 @@
-import type { Graphics, KeyEvent, Process, SystemArgs } from '../core/types';
-import { Palette } from '../core/types';
+import type { Graphics, KeyEvent, Process, SystemArgs } from "../core/types";
+import { Palette } from "../core/types";
 
 /**
  * Example process: an animated bouncing box.
@@ -29,7 +29,7 @@ export class BounceDemo implements Process {
   }
 
   handleInput(event: KeyEvent): void {
-    if (event.key === 'q' || event.key === 'Escape') {
+    if (event.key === "q" || event.key === "Escape") {
       this.exit();
     }
   }
@@ -58,8 +58,14 @@ export class BounceDemo implements Process {
   private draw(): void {
     const g = this.graphics;
     g.clearScreen(Palette.background);
-    g.drawText(0, 0, 'BOUNCE DEMO - press q to exit', Palette.accent);
+    g.drawText(0, 0, "BOUNCE DEMO - press q to exit", Palette.accent);
     g.drawText(0, 1, `t=${this.elapsed.toFixed(2)}s`, Palette.dim);
-    g.drawRect(Math.floor(this.x), Math.floor(this.y), this.size, this.size, Palette.foreground);
+    g.drawRect(
+      Math.floor(this.x),
+      Math.floor(this.y),
+      this.size,
+      this.size,
+      Palette.foreground,
+    );
   }
 }

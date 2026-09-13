@@ -5,6 +5,7 @@ import { registerCommand } from "./core/commands";
 import { Canvas2DRenderer, type Renderer } from "./core/Renderer";
 import { BounceDemo } from "./processes/BounceDemo";
 import type { KeyEvent } from "./core/types";
+import { TestProcess } from "./processes/TestProcess";
 
 function sanitizeKey(event: KeyboardEvent): KeyEvent | null {
   const { key } = event;
@@ -49,6 +50,7 @@ function boot(): void {
   // Process-spawning commands are registered at bootstrap, keeping the core
   // command module free of process imports.
   registerCommand("demo", (ctx) => ctx.kernel.spawn(new BounceDemo()));
+  registerCommand("test", (ctx) => ctx.kernel.spawn(new TestProcess()));
 
   // Future: wired to the Three.js camera animation / DOM overlay.
   kernel.onUiRequest = () => {

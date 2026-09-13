@@ -1,4 +1,4 @@
-import type { Graphics } from '../../src/core/types';
+import type { Graphics } from "../../src/core/types";
 
 /**
  * A minimal in-memory Graphics implementation for testing Shell and Kernel
@@ -12,7 +12,8 @@ export class MockGraphics implements Graphics {
   readonly width: number;
   readonly height: number;
 
-  drawTextCalls: { col: number; row: number; text: string; color?: string }[] = [];
+  drawTextCalls: { col: number; row: number; text: string; color?: string }[] =
+    [];
   drawRectCalls: number = 0;
   clearCount = 0;
 
@@ -27,11 +28,23 @@ export class MockGraphics implements Graphics {
     this.drawTextCalls.push({ col, row, text, color });
   }
 
-  drawRect(_x: number, _y: number, _w: number, _h: number, _color?: string): void {
+  drawRect(
+    _x: number,
+    _y: number,
+    _w: number,
+    _h: number,
+    _color?: string,
+  ): void {
     this.drawRectCalls += 1;
   }
 
-  drawCircle(_x: number, _y: number, _radius: number, _color?: string): void {}
+  drawCircle(
+    _x: number,
+    _y: number,
+    _radius: number,
+    _color?: string,
+    _fill?: boolean,
+  ): void {}
 
   setPixel(_x: number, _y: number, _color?: string): void {}
 
