@@ -4,6 +4,7 @@ import { SignalError } from "./Signals";
 import type { SignalControl } from "./Signals";
 
 const MAX_SCROLLBACK = 500;
+const BLINK_INTERVAL = 0.5;
 
 /** Split text into display rows, hard-wrapping at `width` columns. */
 export function wrapText(text: string, width: number): string[] {
@@ -51,6 +52,9 @@ export class TerminalSession implements Terminal {
   private frameWaiter: Waiter<number> | null = null;
   private keyQueue: KeyEvent[] = [];
   private controller: SignalControl | null = null;
+
+  private blinkElapsed = 0;
+  private cursorVisible = true;
 
   constructor(graphics: Graphics) {
     this.graphics = graphics;
@@ -103,6 +107,8 @@ export class TerminalSession implements Terminal {
       this.cursor = 0;
       this.historyIndex = -1;
       this.readLineWaiter = { resolve, reject };
+      this.cursorVisible = true;
+      this.blinkElapsed = 0;
       this.redraw();
     });
   }
@@ -153,6 +159,14 @@ export class TerminalSession implements Terminal {
       const waiter = this.frameWaiter;
       this.frameWaiter = null;
       waiter.resolve(deltaTime);
+      return;
+    }
+    if (!this.readLineWaiter) return;
+    this.blinkElapsed += deltaTime;
+    if (this.blinkElapsed >= BLINK_INTERVAL) {
+      this.blinkElapsed %= BLINK_INTERVAL;
+      this.cursorVisible = !this.cursorVisible;
+      this.redraw();
     }
   }
 
@@ -221,21 +235,24 @@ export class TerminalSession implements Terminal {
       g.drawText(0, row, this.prompt, Palette.accent);
       g.drawText(this.prompt.length, row, this.buffer, Palette.foreground);
 
-      const cursorCol = this.prompt.length + this.cursor;
-      g.drawRect(
-        cursorCol * g.cellWidth,
-        row * g.cellHeight,
-        g.cellWidth,
-        g.cellHeight,
-        Palette.foreground,
-      );
-      const charUnder = this.buffer[this.cursor];
-      if (charUnder) {
-        g.drawText(cursorCol, row, charUnder, Palette.background);
+      if (this.cursorVisible) {
+        const cursorCol = this.prompt.length + this.cursor;
+        g.drawRect(
+          cursorCol * g.cellWidth,
+          row * g.cellHeight,
+          g.cellWidth,
+          g.cellHeight,
+          Palette.foreground,
+        );
+        const charUnder = this.buffer[this.cursor];
+        if (charUnder) {
+          g.drawText(cursorCol, row, charUnder, Palette.background);
+        }
       }
     }
   }
 
+  /** Submit the current line to the shell. */
   private submitLine(): void {
     const waiter = this.readLineWaiter;
     if (!waiter) return;
@@ -257,6 +274,8 @@ export class TerminalSession implements Terminal {
 
   private handleEditorKey(event: KeyEvent): void {
     const { key, modifiers } = event;
+    this.cursorVisible = true;
+    this.blinkElapsed = 0;
     if (modifiers.ctrl) {
       this.handleCtrlKey(key);
       return;
