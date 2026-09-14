@@ -16,6 +16,9 @@ uniform float uBandHeight;
 uniform float uBandStrength;
 uniform float uNoiseStrength;
 uniform float uNoiseSpeed;
+uniform float uGlitchRate;
+uniform float uGlitchChance;
+uniform float uGlitchStrength;
 varying vec2 vUv;
 
 const float TAU = 6.2831853;
@@ -44,6 +47,18 @@ void main() {
     return;
   }
 
+  float glitchBlock = floor(uTime * uGlitchRate);
+  float glitchLocal = fract(uTime * uGlitchRate);
+  float glitchTrigger = hash(vec2(glitchBlock, 3.14159));
+  float glitchEnv = smoothstep(0.0, 0.1, glitchLocal) * (1.0 - smoothstep(0.15, 1.0, glitchLocal));
+  float glitch = step(1.0 - uGlitchChance, glitchTrigger) * glitchEnv;
+  float bandCenter = hash(vec2(glitchBlock, 2.71828));
+  float bandHalf = 0.05 + 0.12 * hash(vec2(glitchBlock, 1.61803));
+  float inBand = 1.0 - smoothstep(0.0, bandHalf, abs(uv.y - bandCenter));
+  float line = floor(uv.y * scanlineCount);
+  float skew = (hash(vec2(line, glitchBlock * 7.0 + 13.0)) - 0.5) * 2.0 * uGlitchStrength;
+  uv.x = clamp(uv.x + skew * inBand * glitch, 0.0, 1.0);
+
   vec2 snappedUv = vec2(
       (floor(uv.x * screenWidth) + 0.5) / screenWidth,
       (floor(uv.y * scanlineCount) + 0.5) / scanlineCount
@@ -67,10 +82,15 @@ void main() {
 
   float bandPhase = fract(uTime * uBandSpeed * -1.0);
   float bandDelta = fract(uv.y - bandPhase + 0.5) - 0.5;
-  float bandDist = abs(bandDelta);
-  float bandDarken = smoothstep(0.2, 0.0, bandDist);
-  color *= 1.0 - uBandStrength * bandDarken;
+  // Hard top edge, soft fade toward the bottom of the band.
+  float bandTop = 0.08;
+  float bandBottom = 0.22;
+  float bandEdge = 0.01;
+  float topCut = 1.0 - smoothstep(bandTop - bandEdge, bandTop + bandEdge, bandDelta);
+  float bottomFade = smoothstep(-bandBottom, 0.0, bandDelta);
+  color *= 1.0 - uBandStrength * topCut * bottomFade;
 
+  // Composite-cable static: subtle, animated full-screen snow.
   vec2 noiseCell = floor(uv * vec2(screenWidth, scanlineCount));
   float staticNoise = hash(noiseCell + fract(uTime * uNoiseSpeed) * vec2(371.0, 731.0));
   color += (staticNoise - 0.5) * uNoiseStrength;
