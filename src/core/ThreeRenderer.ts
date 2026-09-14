@@ -5,6 +5,7 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import type { TerminalGraphics } from "./TerminalGraphics";
 import type { Renderer } from "./Renderer";
+import { screenFrag } from "../shaders/screen.js";
 
 /**
  * WebGL presentation layer: renders the VRAM (TerminalGraphics) as the screen
@@ -22,8 +23,15 @@ export class ThreeRenderer implements Renderer {
   private texture: THREE.CanvasTexture;
   private composer: EffectComposer;
   private bloomPass: UnrealBloomPass;
+  private screenHeight: number = 0.0;
+  private screenWidth: number = 0.0;
+  private screenAspect: number = 0.0;
+  private verticalStretchFactor: number = 1.5;
 
   constructor(canvas: HTMLCanvasElement) {
+    this.screenHeight = canvas.height;
+    this.screenWidth = canvas.width;
+    this.screenAspect = this.screenWidth / this.screenHeight;
     this.renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: false,
@@ -49,7 +57,7 @@ export class ThreeRenderer implements Renderer {
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     this.bloomPass = new UnrealBloomPass(
       new THREE.Vector2(1, 1),
-      0.07, // strength
+      0.15, // strength
       1, // radius
       0.2, // threshold
     );
@@ -83,10 +91,13 @@ export class ThreeRenderer implements Renderer {
       uniforms: {
         tDiffuse: { value: this.texture },
         uTime: { value: 0 },
-        uScanlines: { value: 400.0 },
         uDistortion: { value: 0.0 },
         uChromaticAberration: { value: 0.0 },
         uVignette: { value: 0.0 },
+        scanlineHeight: {
+          value: this.screenHeight * this.verticalStretchFactor,
+        },
+        scanlineDimFactor: { value: 0.75 },
       },
       vertexShader: `
       varying vec2 vUv;
@@ -95,22 +106,15 @@ export class ThreeRenderer implements Renderer {
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
       `,
-      fragmentShader: `
-      uniform sampler2D tDiffuse;
-      uniform float uTime;
-      uniform float uScanlines;
-      uniform float uDistortion;
-      uniform float uChromaticAberration;
-      uniform float uVignette;
-      varying vec2 vUv;
-      void main() {
-        vec2 uv = vUv;
-        vec3 color = texture2D(tDiffuse, uv).rgb;
-        gl_FragColor = vec4(color, 1.0);
-      }
-      `,
+      fragmentShader: screenFrag,
     });
-    const screen = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 2.0), material);
+    const planeWidth = 3.6;
+    const planeHeight =
+      (planeWidth / this.screenAspect) * this.verticalStretchFactor;
+    const screen = new THREE.Mesh(
+      new THREE.PlaneGeometry(planeWidth, planeHeight),
+      material,
+    );
     screen.position.z = 0.26;
     this.scene.add(screen);
   }
