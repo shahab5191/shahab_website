@@ -87,13 +87,14 @@ export class ThreeRenderer implements Renderer {
       uniforms: {
         tDiffuse: { value: this.texture },
         uTime: { value: 0 },
-        uDistortion: { value: 0.0 },
+        uDistortion: { value: 0.05 },
         uChromaticAberration: { value: 0.0 },
         uVignette: { value: 0.0 },
         scanlineCount: {
           value: 0.0,
         },
         scanlineDimFactor: { value: 1.0 },
+        uAspect: { value: 1.0 },
       },
       vertexShader: `
       varying vec2 vUv;
@@ -125,8 +126,10 @@ export class ThreeRenderer implements Renderer {
 
   render(graphics: TerminalGraphics): void {
     this.screenMaterial.uniforms.scanlineCount!.value = graphics.height;
-    this.screen.scale.y =
-      this.verticalStretchFactor / (graphics.width / graphics.height);
+    const screenAspect = graphics.width / graphics.height;
+    this.screen.scale.y = this.verticalStretchFactor / screenAspect;
+    this.screenMaterial.uniforms.uAspect!.value =
+      screenAspect / this.verticalStretchFactor;
     this.texture.image = graphics.getCanvas();
     this.texture.needsUpdate = true;
     this.composer.render();
