@@ -137,7 +137,7 @@ export const Colors = {
   Orange: "#813300",
   Brown: "#432D00",
   LightRed: "#9A6759",
-  DarkGrey: "#444444",
+  DarkGrey: "#222222",
   MediumGrey: "#6C6C6C",
   LightGreen: "#9AD284",
   LightBlue: "#6C5EB5",

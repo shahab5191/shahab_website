@@ -1,5 +1,5 @@
 import type { Graphics, KeyEvent, Terminal } from "./types";
-import { Palette } from "./types";
+import { Colors, Palette } from "./types";
 import { SignalError } from "./Signals";
 import type { SignalControl } from "./Signals";
 
@@ -220,7 +220,7 @@ export class TerminalSession implements Terminal {
 
   private redraw(): void {
     const g = this.graphics;
-    g.clearScreen(Palette.background);
+    g.clearScreen(Colors.Blue);
 
     const reserve = this.readLineWaiter ? 1 : 0;
     const maxOutputRows = g.rows - reserve;

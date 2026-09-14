@@ -7,6 +7,7 @@ uniform float uChromaticAberration;
 uniform float uVignette;
 uniform float scanlineDimFactor;
 uniform float uAspect;
+uniform float uVignetteDimFactor;
 varying vec2 vUv;
 
 // Bulges the center outward and compresses the edges, simulating convex CRT
@@ -33,6 +34,11 @@ void main() {
   float aa = fwidth(y);
   float dimMask = smoothstep(1.0 / 3.0 - aa, 1.0 / 3.0 + aa, d);
   color *= 1.0 - scanlineDimFactor * dimMask;
+
+  float distanceToCenter = distance(uv, vec2(0.5));
+  float vignette = smoothstep(0.2, uVignetteDimFactor, distanceToCenter);
+  color *= 1.0 - uVignette * vignette;
+
   gl_FragColor = vec4(color, 1.0);
 }
 `;

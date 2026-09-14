@@ -43,9 +43,9 @@ export class ThreeRenderer implements Renderer {
     this.camera.lookAt(0, 0, 0);
 
     this.texture = new THREE.CanvasTexture(document.createElement("canvas"));
-    this.texture.minFilter = THREE.NearestFilter;
+    this.texture.minFilter = THREE.NearestMipmapLinearFilter;
     this.texture.magFilter = THREE.NearestFilter;
-    this.texture.generateMipmaps = false;
+    this.texture.generateMipmaps = true;
 
     this.buildScene();
 
@@ -89,10 +89,9 @@ export class ThreeRenderer implements Renderer {
         uTime: { value: 0 },
         uDistortion: { value: 0.05 },
         uChromaticAberration: { value: 0.0 },
-        uVignette: { value: 0.0 },
-        scanlineCount: {
-          value: 0.0,
-        },
+        uVignette: { value: 1.0 },
+        uVignetteDimFactor: { value: 0.9 },
+        scanlineCount: { value: 0.0 },
         scanlineDimFactor: { value: 1.0 },
         uAspect: { value: 1.0 },
       },
