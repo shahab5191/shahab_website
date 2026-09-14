@@ -114,6 +114,8 @@ export class ThreeRenderer implements Renderer {
         uBandSpeed: { value: 0.06 },
         uBandHeight: { value: 0.14 },
         uBandStrength: { value: 0.35 },
+        uNoiseStrength: { value: 0.008 },
+        uNoiseSpeed: { value: 0.1 },
       },
       vertexShader: `
       varying vec2 vUv;

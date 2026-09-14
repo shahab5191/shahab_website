@@ -14,9 +14,16 @@ uniform float uMaskStrength;
 uniform float uBandSpeed;
 uniform float uBandHeight;
 uniform float uBandStrength;
+uniform float uNoiseStrength;
+uniform float uNoiseSpeed;
 varying vec2 vUv;
 
 const float TAU = 6.2831853;
+
+// Cheap 2D hash used to synthesize the composite-cable static.
+float hash(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+}
 
 // Bulges the center outward and compresses the edges, simulating convex CRT
 // glass. aspect keeps the curve circular in screen space rather than
@@ -63,6 +70,10 @@ void main() {
   float bandDist = abs(bandDelta);
   float bandDarken = smoothstep(0.2, 0.0, bandDist);
   color *= 1.0 - uBandStrength * bandDarken;
+
+  vec2 noiseCell = floor(uv * vec2(screenWidth, scanlineCount));
+  float staticNoise = hash(noiseCell + fract(uTime * uNoiseSpeed) * vec2(371.0, 731.0));
+  color += (staticNoise - 0.5) * uNoiseStrength;
 
   gl_FragColor = vec4(color, 1.0);
 }
