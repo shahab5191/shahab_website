@@ -14,12 +14,12 @@ interface ActivePiece {
 
 /** Square pixel tile; board is 10x20, the classic playfield. */
 const TILE = 16;
-const COLS = 10;
+const COLS = 12;
 const ROWS = 20;
 /** Text rows reserved at the top for the HUD. */
 const HUD_ROWS = 2;
 /** Border thickness around the play field, in tiles. */
-const BORDER = 1;
+const BORDER = 0;
 
 const PIECE_TYPES: PieceType[] = ["I", "O", "T", "S", "Z", "J", "L"];
 
@@ -127,7 +127,7 @@ class Bag {
 const LINE_SCORES = [0, 100, 300, 500, 800];
 
 /** Full-screen Tetris rendered on the terminal framebuffer. */
-export class TetrisGame implements Process {
+export class BlocksGame implements Process {
   private readonly bag = new Bag();
 
   private board: (PieceType | null)[][] = [];
@@ -150,7 +150,9 @@ export class TetrisGame implements Process {
     const boardH = ROWS * TILE;
 
     this.originX = Math.floor((g.width - boardW) / 2);
-    this.originY = HUD_ROWS * g.cellHeight + Math.floor((g.height - HUD_ROWS * g.cellHeight - boardH) / 2);
+    this.originY =
+      HUD_ROWS * g.cellHeight +
+      Math.floor((g.height - HUD_ROWS * g.cellHeight - boardH) / 2);
     this.previewX = this.originX + boardW + 2 * TILE;
 
     this.reset();
@@ -364,8 +366,14 @@ export class TetrisGame implements Process {
       `score ${this.score}   level ${this.level}   lines ${this.lines}`,
       theme.dim,
     );
-    const hint = "arrows/WASD move   up/x rotate   space drop   p pause   q quit";
-    g.drawText(Math.max(1, Math.floor((g.cols - hint.length) / 2)), g.rows - 1, hint, theme.dim);
+    const hint =
+      "arrows/WASD move   up/x rotate   space drop   p pause   q quit";
+    g.drawText(
+      Math.max(1, Math.floor((g.cols - hint.length) / 2)),
+      g.rows - 1,
+      hint,
+      theme.dim,
+    );
 
     const boardX = this.originX - BORDER * TILE;
     const boardY = this.originY - BORDER * TILE;
@@ -380,7 +388,12 @@ export class TetrisGame implements Process {
       for (let c = 0; c < COLS; c++) {
         const type = this.board[r]![c];
         if (type) {
-          this.drawCell(g, this.cellX(c), this.cellY(r), colors[PIECE_COLORS[type]]);
+          this.drawCell(
+            g,
+            this.cellX(c),
+            this.cellY(r),
+            colors[PIECE_COLORS[type]],
+          );
         }
       }
     }
@@ -390,11 +403,21 @@ export class TetrisGame implements Process {
       const ghostRow = this.ghostRow();
       if (ghostRow > this.current.row) {
         for (const [cx, cy] of this.rotations(type, this.current.rot)) {
-          this.drawCell(g, this.cellX(this.current.col + cx), this.cellY(ghostRow + cy), colors.DarkGrey);
+          this.drawCell(
+            g,
+            this.cellX(this.current.col + cx),
+            this.cellY(ghostRow + cy),
+            colors.DarkGrey,
+          );
         }
       }
       for (const [cx, cy] of this.rotations(type, this.current.rot)) {
-        this.drawCell(g, this.cellX(this.current.col + cx), this.cellY(this.current.row + cy), colors[PIECE_COLORS[type]]);
+        this.drawCell(
+          g,
+          this.cellX(this.current.col + cx),
+          this.cellY(this.current.row + cy),
+          colors[PIECE_COLORS[type]],
+        );
       }
     }
 
@@ -403,7 +426,12 @@ export class TetrisGame implements Process {
     if (this.over) {
       const msg = "GAME OVER";
       const sub = "press r to restart, q to quit";
-      g.drawText(center(g.cols, msg.length), Math.floor(g.rows / 2), msg, theme.accent);
+      g.drawText(
+        center(g.cols, msg.length),
+        Math.floor(g.rows / 2),
+        msg,
+        theme.accent,
+      );
       g.drawText(
         center(g.cols, sub.length),
         Math.floor(g.rows / 2) + 1,
@@ -413,9 +441,17 @@ export class TetrisGame implements Process {
     }
   }
 
-  private drawPreview(g: Terminal["graphics"], colors: ReturnType<typeof getColors>): void {
+  private drawPreview(
+    g: Terminal["graphics"],
+    colors: ReturnType<typeof getColors>,
+  ): void {
     const labelRow = Math.floor((this.originY - g.cellHeight) / g.cellHeight);
-    g.drawText(Math.floor(this.previewX / g.cellWidth), labelRow, "next", getTheme().dim);
+    g.drawText(
+      Math.floor(this.previewX / g.cellWidth),
+      labelRow,
+      "next",
+      getTheme().dim,
+    );
 
     const cells = ROTATIONS[this.next][0]!;
     const xs = cells.map(([x]) => x);
@@ -425,7 +461,12 @@ export class TetrisGame implements Process {
     const ox = this.previewX + Math.floor((4 * TILE - w * TILE) / 2);
     const oy = this.originY + Math.floor((2 * TILE - h * TILE) / 2);
     for (const [cx, cy] of cells) {
-      this.drawCell(g, ox + cx * TILE, oy + cy * TILE, colors[PIECE_COLORS[this.next]]);
+      this.drawCell(
+        g,
+        ox + cx * TILE,
+        oy + cy * TILE,
+        colors[PIECE_COLORS[this.next]],
+      );
     }
   }
 
@@ -437,7 +478,12 @@ export class TetrisGame implements Process {
     return this.originY + row * TILE;
   }
 
-  private drawCell(g: Terminal["graphics"], x: number, y: number, color: string): void {
+  private drawCell(
+    g: Terminal["graphics"],
+    x: number,
+    y: number,
+    color: string,
+  ): void {
     g.drawRect(x + 1, y + 1, TILE - 2, TILE - 2, color);
   }
 }
