@@ -1,5 +1,5 @@
 import type { Graphics, KeyEvent, Terminal } from "./types";
-import { getTheme } from "./theme";
+import { getTheme, resolveColor } from "./theme";
 import { SignalError } from "./Signals";
 import type { SignalControl } from "./Signals";
 
@@ -21,6 +21,87 @@ export function wrapText(text: string, width: number): string[] {
   return out;
 }
 
+/** A colored run of text within a scrollback row. */
+interface Segment {
+  text: string;
+  color: string;
+}
+
+/**
+ * Parse inline color markup into segments. `{ColorName}` switches color,
+ * `{/}` resets to the default. Unknown or malformed tags are emitted literally.
+ */
+function parseInline(text: string, defaultColor: string): Segment[] {
+  const segments: Segment[] = [];
+  let buf = "";
+  let color = defaultColor;
+
+  const flush = (): void => {
+    if (buf.length > 0) {
+      segments.push({ text: buf, color });
+      buf = "";
+    }
+  };
+
+  let i = 0;
+  while (i < text.length) {
+    const ch = text[i]!;
+    if (ch === "{") {
+      const close = text.indexOf("}", i + 1);
+      if (close !== -1) {
+        const tag = text.slice(i + 1, close);
+        if (tag === "/") {
+          flush();
+          color = defaultColor;
+          i = close + 1;
+          continue;
+        }
+        const resolved = resolveColor(tag);
+        if (resolved) {
+          flush();
+          color = resolved;
+          i = close + 1;
+          continue;
+        }
+      }
+    }
+    buf += ch;
+    i += 1;
+  }
+  flush();
+  return segments;
+}
+
+/** Wrap colored segments into rows of `width` columns, preserving color runs. */
+function wrapSegments(segments: Segment[], width: number): Segment[][] {
+  const rows: Segment[][] = [];
+  let row: Segment[] = [];
+  let col = 0;
+
+  for (const seg of segments) {
+    let text = seg.text;
+    while (text.length > 0) {
+      if (col >= width) {
+        rows.push(row);
+        row = [];
+        col = 0;
+        continue;
+      }
+      const take = Math.min(text.length, width - col);
+      row.push({ text: text.slice(0, take), color: seg.color });
+      col += take;
+      text = text.slice(take);
+      if (col >= width) {
+        rows.push(row);
+        row = [];
+        col = 0;
+      }
+    }
+  }
+  if (row.length > 0) rows.push(row);
+  return rows;
+}
+
 interface Waiter<T> {
   resolve: (value: T) => void;
   reject: (error: unknown) => void;
@@ -38,7 +119,7 @@ interface Waiter<T> {
 export class TerminalSession implements Terminal {
   readonly graphics: Graphics;
 
-  private lines: string[] = [];
+  private lines: Segment[][] = [];
   private pending = "";
   private prompt = "> ";
   private buffer = "";
@@ -77,7 +158,7 @@ export class TerminalSession implements Terminal {
 
   /** Copy of the scrollback rows (exposed for tests/tools). */
   get scrollback(): readonly string[] {
-    return [...this.lines];
+    return this.lines.map((row) => row.map((s) => s.text).join(""));
   }
 
   /** Current input line (exposed for tests/tools). */
@@ -96,9 +177,7 @@ export class TerminalSession implements Terminal {
     if (idx !== -1) {
       const complete = this.pending.slice(0, idx);
       this.pending = this.pending.slice(idx + 1);
-      for (const chunk of wrapText(complete, this.textCols)) {
-        this.pushLine(chunk);
-      }
+      this.pushText(complete);
     }
     this.redraw();
   }
@@ -224,14 +303,26 @@ export class TerminalSession implements Terminal {
 
   private flushPending(): void {
     if (this.pending === "") return;
-    for (const chunk of wrapText(this.pending, this.textCols)) {
-      this.pushLine(chunk);
-    }
+    this.pushText(this.pending);
     this.pending = "";
   }
 
-  private pushLine(chunk: string): void {
-    this.lines.push(chunk);
+  /** Parse and wrap a block of output text (may contain `\n`) into rows. */
+  private pushText(text: string): void {
+    for (const raw of text.split("\n")) {
+      if (raw === "") {
+        this.pushRow([]);
+        continue;
+      }
+      const segments = parseInline(raw, getTheme().foreground);
+      for (const row of wrapSegments(segments, this.textCols)) {
+        this.pushRow(row);
+      }
+    }
+  }
+
+  private pushRow(row: Segment[]): void {
+    this.lines.push(row);
     if (this.lines.length > MAX_SCROLLBACK) {
       this.lines.splice(0, this.lines.length - MAX_SCROLLBACK);
     }
@@ -247,12 +338,12 @@ export class TerminalSession implements Terminal {
     const start = Math.max(0, this.lines.length - maxOutputRows);
     let end = Math.min(this.lines.length, start + maxOutputRows);
     for (let i = start; i < this.lines.length; i++) {
-      g.drawText(
-        this.marginHorizontal,
-        this.marginVertical + (i - start),
-        this.lines[i] ?? "",
-        theme.foreground,
-      );
+      const row = this.lines[i] ?? [];
+      let col = this.marginHorizontal;
+      for (const seg of row) {
+        g.drawText(col, this.marginVertical + (i - start), seg.text, seg.color);
+        col += seg.text.length;
+      }
     }
 
     if (this.readLineWaiter) {
@@ -297,9 +388,12 @@ export class TerminalSession implements Terminal {
     const waiter = this.readLineWaiter;
     if (!waiter) return;
     const line = this.buffer;
-    const full = this.prompt + line;
-    for (const chunk of wrapText(full, this.textCols)) {
-      this.pushLine(chunk);
+    const segments: Segment[] = [
+      { text: this.prompt, color: getTheme().accent },
+      { text: line, color: getTheme().foreground },
+    ];
+    for (const row of wrapSegments(segments, this.textCols)) {
+      this.pushRow(row);
     }
     if (line.trim() !== "" && this.history[this.history.length - 1] !== line) {
       this.history.push(line);

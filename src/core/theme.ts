@@ -233,6 +233,26 @@ export function getColors(): ThemeColors {
   return currentTheme.colors;
 }
 
+/**
+ * Resolve an inline color name to a concrete color string. Accepts the four
+ * semantic roles (`foreground`, `background`, `accent`, `dim`) as well as the
+ * 16 palette names. Returns `null` for unknown names.
+ */
+export function resolveColor(name: string): string | null {
+  switch (name) {
+    case "foreground":
+      return currentTheme.foreground;
+    case "background":
+      return currentTheme.background;
+    case "accent":
+      return currentTheme.accent;
+    case "dim":
+      return currentTheme.dim;
+    default:
+      return (currentTheme.colors as Record<string, string>)[name] ?? null;
+  }
+}
+
 /** Switch the active theme by name. Returns false for an unknown name. */
 export function setTheme(name: string): boolean {
   const next = themes[name];
