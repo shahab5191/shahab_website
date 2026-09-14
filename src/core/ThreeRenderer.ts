@@ -6,6 +6,7 @@ import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import type { TerminalGraphics } from "./TerminalGraphics";
 import type { Renderer } from "./Renderer";
 import { screenFrag } from "../shaders/screen.js";
+import { getTheme } from "./theme.js";
 
 /**
  * WebGL presentation layer: renders the VRAM (TerminalGraphics) as the screen
@@ -53,7 +54,7 @@ export class ThreeRenderer implements Renderer {
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     this.bloomPass = new UnrealBloomPass(
       new THREE.Vector2(1, 1),
-      0.15, // strength
+      getTheme().bloomFactor, // strength
       1, // radius
       0.2, // threshold
     );
@@ -113,6 +114,10 @@ export class ThreeRenderer implements Renderer {
     screen.position.z = 0.26;
     this.scene.add(screen);
     this.screen = screen;
+  }
+
+  setBloomFactor(factor: number): void {
+    this.bloomPass.strength = factor;
   }
 
   resize(width: number, height: number): void {

@@ -76,6 +76,8 @@ export interface Terminal {
   writeLine(text?: string): void;
   /** Clear the scrollback and redraw. */
   clear(): void;
+  /** Re-render the current screen state (e.g. after a theme change). */
+  refresh(): void;
   /**
    * Read a line of input (cooked mode). Renders `prompt` plus an editable
    * buffer with echo, cursor movement, and history. Resolves on Enter.
@@ -124,32 +126,8 @@ export interface Process {
   run(terminal: Terminal, args: SystemArgs): Promise<void> | void;
 }
 
-/** Named colors shared across the terminal. */
-export const Colors = {
-  Black: "#000000",
-  White: "#FFFFFF",
-  Red: "#68372B",
-  Cyan: "#70A4B2",
-  Purple: "#6F3D86",
-  Green: "#588D43",
-  Blue: "#352879",
-  Yellow: "#B8C76F",
-  Orange: "#813300",
-  Brown: "#432D00",
-  LightRed: "#9A6759",
-  DarkGrey: "#222222",
-  MediumGrey: "#6C6C6C",
-  LightGreen: "#9AD284",
-  LightBlue: "#6C5EB5",
-  LightGrey: "#959595",
-} as const;
-
-/** Named color palette shared across the terminal. */
-export const Palette = {
-  background: Colors.Black,
-  foreground: Colors.LightGreen,
-  accent: Colors.Cyan,
-  dim: Colors.DarkGrey,
-} as const;
-
-export type RetroColor = (typeof Colors)[keyof typeof Colors];
+/**
+ * A color accepted by the graphics layer. Historically a union of the named
+ * palette literals; themes are now dynamic, so any CSS color string is valid.
+ */
+export type RetroColor = string;

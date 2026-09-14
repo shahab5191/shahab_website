@@ -49,8 +49,8 @@ function boot(): void {
   });
   const terminal = new TerminalSession(graphics);
   const shell = new Shell();
-  const kernel = new Kernel(graphics, terminal, shell);
   const renderer: Renderer = new ThreeRenderer(screen);
+  const kernel = new Kernel(graphics, terminal, shell, renderer);
 
   // Process-spawning commands are registered at bootstrap, keeping the core
   // command module free of process imports.

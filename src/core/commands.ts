@@ -1,11 +1,14 @@
 import type { Terminal } from "./types";
 import type { Kernel } from "./Kernel";
+import { getTheme, setTheme, themeNames } from "./theme";
+import { Renderer } from "./Renderer";
 
 /** Context handed to a command when it runs. */
 export interface CommandContext {
   terminal: Terminal;
   kernel: Kernel;
   args: string[];
+  renderer: Renderer;
 }
 
 export type Command = (ctx: CommandContext) => void;
@@ -63,4 +66,21 @@ registerCommand("neofetch", (ctx) => {
 registerCommand("ui", (ctx) => {
   ctx.terminal.writeLine("transitioning to modern UI...");
   ctx.kernel.requestUi();
+});
+
+registerCommand("theme", (ctx) => {
+  const name = ctx.args[0];
+  if (!name) {
+    ctx.terminal.writeLine(`current theme: ${getTheme().name}`);
+    ctx.terminal.writeLine(`available themes: ${themeNames().join(", ")}`);
+    return;
+  }
+  if (setTheme(name)) {
+    ctx.terminal.writeLine(`theme set to ${getTheme().name}`);
+    ctx.terminal.refresh();
+    ctx.renderer.setBloomFactor(getTheme().bloomFactor);
+  } else {
+    ctx.terminal.writeLine(`unknown theme: ${name}`);
+    ctx.terminal.writeLine(`available themes: ${themeNames().join(", ")}`);
+  }
 });

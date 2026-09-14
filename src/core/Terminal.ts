@@ -1,5 +1,5 @@
 import type { Graphics, KeyEvent, Terminal } from "./types";
-import { Colors, Palette } from "./types";
+import { getTheme } from "./theme";
 import { SignalError } from "./Signals";
 import type { SignalControl } from "./Signals";
 
@@ -95,6 +95,10 @@ export class TerminalSession implements Terminal {
   clear(): void {
     this.lines = [];
     this.pending = "";
+    this.redraw();
+  }
+
+  refresh(): void {
     this.redraw();
   }
 
@@ -220,20 +224,21 @@ export class TerminalSession implements Terminal {
 
   private redraw(): void {
     const g = this.graphics;
-    g.clearScreen(Colors.Blue);
+    const theme = getTheme();
+    g.clearScreen(theme.background);
 
     const reserve = this.readLineWaiter ? 1 : 0;
     const maxOutputRows = g.rows - reserve;
     const start = Math.max(0, this.lines.length - maxOutputRows);
     let end = Math.min(this.lines.length, start + maxOutputRows);
     for (let i = start; i < this.lines.length; i++) {
-      g.drawText(0, i - start, this.lines[i] ?? "", Palette.foreground);
+      g.drawText(0, i - start, this.lines[i] ?? "", theme.foreground);
     }
 
     if (this.readLineWaiter) {
       const row = Math.min(end + 1, maxOutputRows);
-      g.drawText(0, row, this.prompt, Palette.accent);
-      g.drawText(this.prompt.length, row, this.buffer, Palette.foreground);
+      g.drawText(0, row, this.prompt, theme.accent);
+      g.drawText(this.prompt.length, row, this.buffer, theme.foreground);
 
       if (this.cursorVisible) {
         const cursorCol = this.prompt.length + this.cursor;
@@ -242,11 +247,11 @@ export class TerminalSession implements Terminal {
           row * g.cellHeight,
           g.cellWidth,
           g.cellHeight,
-          Palette.foreground,
+          theme.foreground,
         );
         const charUnder = this.buffer[this.cursor];
         if (charUnder) {
-          g.drawText(cursorCol, row, charUnder, Palette.background);
+          g.drawText(cursorCol, row, charUnder, theme.background);
         }
       }
     }

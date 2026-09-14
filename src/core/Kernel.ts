@@ -8,6 +8,7 @@ import type {
   SystemArgs,
   TerminalControl,
 } from "./types";
+import { Renderer } from "./Renderer";
 
 /**
  * The OS Kernel: drives a single shared `Terminal` (tty), manages the base
@@ -25,14 +26,21 @@ export class Kernel {
   private shell: Shell;
   private process: Process | null = null;
   private controller: SignalController | null = null;
+  private renderer: Renderer;
 
   /** Hook invoked by the `ui` command; wired to the DOM overlay in bootstrap. */
   onUiRequest: (() => void) | null = null;
 
-  constructor(graphics: Graphics, terminal: TerminalControl, shell: Shell) {
+  constructor(
+    graphics: Graphics,
+    terminal: TerminalControl,
+    shell: Shell,
+    renderer: Renderer,
+  ) {
     this.graphics = graphics;
     this.terminal = terminal;
     this.shell = shell;
+    this.renderer = renderer;
     shell.onCommand = (line) => this.execute(line);
   }
 
@@ -129,6 +137,7 @@ export class Kernel {
       terminal: this.terminal,
       kernel: this,
       args: rest,
+      renderer: this.renderer,
     };
     command(ctx);
   }

@@ -1,5 +1,5 @@
 import type { TerminalGraphics } from "./TerminalGraphics";
-import { Colors } from "./types";
+import { getTheme } from "./theme";
 
 /**
  * A presentation-layer renderer. It consumes the VRAM (TerminalGraphics) and
@@ -12,6 +12,7 @@ import { Colors } from "./types";
 export interface Renderer {
   render(graphics: TerminalGraphics): void;
   resize(width: number, height: number): void;
+  setBloomFactor(factor: number): void;
 }
 
 export class Canvas2DRenderer implements Renderer {
@@ -23,6 +24,10 @@ export class Canvas2DRenderer implements Renderer {
     if (!ctx) throw new Error("Canvas2DRenderer: could not acquire 2D context");
     this.canvas = canvas;
     this.ctx = ctx;
+  }
+
+  setBloomFactor(_factor: number): void {
+    // no-op
   }
 
   resize(width: number, height: number): void {
@@ -38,7 +43,7 @@ export class Canvas2DRenderer implements Renderer {
 
     ctx.imageSmoothingEnabled = false;
 
-    ctx.fillStyle = Colors.Black;
+    ctx.fillStyle = getTheme().background;
     ctx.fillRect(0, 0, dw, dh);
 
     // Integer scaling keeps every VRAM pixel a uniform square, so the image

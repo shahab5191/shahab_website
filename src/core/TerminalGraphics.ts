@@ -1,5 +1,5 @@
 import type { Graphics, RetroColor } from "./types";
-import { Palette } from "./types";
+import { getTheme } from "./theme";
 import type { BitmapFont } from "./BitmapFont";
 import { vga8x16 } from "./fonts/vga8x16";
 
@@ -119,7 +119,7 @@ export class TerminalGraphics implements Graphics {
 
     this.atlas = buildGlyphAtlas(this.font);
 
-    this.clearScreen(Palette.background);
+    this.clearScreen(getTheme().background);
   }
 
   /** True if the VRAM has been mutated since the last GPU upload. */
@@ -147,7 +147,7 @@ export class TerminalGraphics implements Graphics {
     col: number,
     row: number,
     text: string,
-    color: RetroColor = Palette.foreground,
+    color: RetroColor = getTheme().foreground,
   ): void {
     const atlas = this.tintedAtlas(color);
     let x = col * this.cellWidth;
@@ -180,7 +180,7 @@ export class TerminalGraphics implements Graphics {
     y: number,
     w: number,
     h: number,
-    color: RetroColor = Palette.foreground,
+    color: RetroColor = getTheme().foreground,
   ): void {
     this.ctx.fillStyle = color;
     this.ctx.fillRect(x, y, w, h);
@@ -191,7 +191,7 @@ export class TerminalGraphics implements Graphics {
     x: number,
     y: number,
     radius: number,
-    color: RetroColor = Palette.foreground,
+    color: RetroColor = getTheme().foreground,
     fill: boolean = false,
   ): void {
     this.ctx.strokeStyle = color;
@@ -206,13 +206,17 @@ export class TerminalGraphics implements Graphics {
     this.markDirty();
   }
 
-  setPixel(x: number, y: number, color: RetroColor = Palette.foreground): void {
+  setPixel(
+    x: number,
+    y: number,
+    color: RetroColor = getTheme().foreground,
+  ): void {
     this.ctx.fillStyle = color;
     this.ctx.fillRect(Math.floor(x), Math.floor(y), 1, 1);
     this.markDirty();
   }
 
-  clearScreen(color: RetroColor = Palette.background): void {
+  clearScreen(color: RetroColor = getTheme().background): void {
     this.ctx.fillStyle = color;
     this.ctx.fillRect(0, 0, this.width, this.height);
     this.markDirty();

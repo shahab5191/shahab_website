@@ -1,5 +1,5 @@
 import type { Process, SystemArgs, Terminal } from "../core/types";
-import { Colors } from "../core/types";
+import { getColors } from "../core/theme";
 
 class Vec2 {
   x: number = 0;
@@ -60,12 +60,13 @@ export class TestProcess implements Process {
 
   private draw(terminal: Terminal): void {
     const g = terminal.graphics;
+    const colors = getColors();
     g.clearScreen();
     g.drawCircle(
       this.circlePos.x,
       this.circlePos.y,
       this.circleRadius,
-      Colors.Red,
+      colors.Red,
       true,
     );
     g.drawRect(
@@ -73,7 +74,7 @@ export class TestProcess implements Process {
       this.rectPos.y,
       this.rectSize.x,
       this.rectSize.y,
-      Colors.LightBlue,
+      colors.LightBlue,
     );
   }
 }

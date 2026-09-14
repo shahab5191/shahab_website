@@ -1,5 +1,5 @@
 import type { Process, SystemArgs, Terminal } from "../core/types";
-import { Palette } from "../core/types";
+import { getTheme } from "../core/theme";
 
 /**
  * Example process: an animated bouncing box.
@@ -52,15 +52,16 @@ export class BounceDemo implements Process {
 
   private draw(terminal: Terminal): void {
     const g = terminal.graphics;
-    g.clearScreen(Palette.background);
-    g.drawText(0, 0, "BOUNCE DEMO - press q to exit", Palette.accent);
-    g.drawText(0, 1, `t=${this.elapsed.toFixed(2)}s`, Palette.dim);
+    const theme = getTheme();
+    g.clearScreen(theme.background);
+    g.drawText(0, 0, "BOUNCE DEMO - press q to exit", theme.accent);
+    g.drawText(0, 1, `t=${this.elapsed.toFixed(2)}s`, theme.dim);
     g.drawRect(
       Math.floor(this.x),
       Math.floor(this.y),
       this.size,
       this.size,
-      Palette.foreground,
+      theme.foreground,
     );
   }
 }
