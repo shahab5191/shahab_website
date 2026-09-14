@@ -1,10 +1,5 @@
-import {
-  type Graphics,
-  type KeyEvent,
-  type Process,
-  type SystemArgs,
-  Colors,
-} from "../core/types";
+import type { Process, SystemArgs, Terminal } from "../core/types";
+import { Colors } from "../core/types";
 
 class Vec2 {
   x: number = 0;
@@ -15,8 +10,13 @@ class Vec2 {
   }
 }
 
+/**
+ * Example full-screen process: two shapes drifting on the framebuffer.
+ *
+ * Same coroutine shape as `BounceDemo`: `nextFrame` for animation, `pollKeys`
+ * for raw input, and `exit` to quit.
+ */
 export class TestProcess implements Process {
-  private exit!: (code?: number) => void;
   private rectSpeed = new Vec2();
   private rectPos = new Vec2();
   private rectSize = new Vec2();
@@ -24,33 +24,7 @@ export class TestProcess implements Process {
   private circlePos = new Vec2();
   private circleRadius = 0;
 
-  private graphics!: Graphics;
-
-  private _updateShapes() {
-    if (!this.graphics) {
-      console.log("no graphics");
-      return;
-    }
-    this.graphics.clearScreen();
-    this.graphics.drawCircle(
-      this.circlePos.x,
-      this.circlePos.y,
-      this.circleRadius,
-      Colors.Red,
-      true,
-    );
-    this.graphics.drawRect(
-      this.rectPos.x,
-      this.rectPos.y,
-      this.rectSize.x,
-      this.rectSize.y,
-      Colors.LightBlue,
-    );
-  }
-
-  init(graphics: Graphics, systemArgs: SystemArgs): void {
-    this.exit = systemArgs.exit
-    this.graphics = graphics;
+  async run(terminal: Terminal, args: SystemArgs): Promise<void> {
     this.rectSpeed.x = 10;
     this.rectSpeed.y = 1;
     this.circleSpeed.x = -1;
@@ -62,24 +36,44 @@ export class TestProcess implements Process {
     this.circlePos.x = 100;
     this.circlePos.y = 100;
     this.circleRadius = 50;
-    this._updateShapes();
-  }
 
-  handleInput(event: KeyEvent): void {
-    if (event.key === "q" || event.key === "Escape") {
-      this.exit();
+    this.draw(terminal);
+
+    while (true) {
+      const deltaTime = await terminal.nextFrame();
+
+      for (const event of terminal.pollKeys()) {
+        if (event.key === "q" || event.key === "Escape") {
+          args.exit();
+          return;
+        }
+      }
+
+      this.rectPos.x += this.rectSpeed.x * deltaTime;
+      this.rectPos.y += this.rectSpeed.y * deltaTime;
+      this.circlePos.x += this.circleSpeed.x * deltaTime;
+      this.circlePos.y += this.circleSpeed.y * deltaTime;
+
+      this.draw(terminal);
     }
   }
 
-  update(deltaTime: number): void {
-    this.rectPos.x += this.rectSpeed.x * deltaTime;
-    this.rectPos.y += this.rectSpeed.y * deltaTime;
-    this.circlePos.x += this.circleSpeed.x * deltaTime;
-    this.circlePos.y += this.circleSpeed.y * deltaTime;
-    this._updateShapes();
-  }
-
-  cleanup(): void {
-    console.log("cleanup");
+  private draw(terminal: Terminal): void {
+    const g = terminal.graphics;
+    g.clearScreen();
+    g.drawCircle(
+      this.circlePos.x,
+      this.circlePos.y,
+      this.circleRadius,
+      Colors.Red,
+      true,
+    );
+    g.drawRect(
+      this.rectPos.x,
+      this.rectPos.y,
+      this.rectSize.x,
+      this.rectSize.y,
+      Colors.LightBlue,
+    );
   }
 }

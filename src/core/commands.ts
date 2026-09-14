@@ -1,12 +1,10 @@
-import type { Graphics } from "./types";
+import type { Terminal } from "./types";
 import type { Kernel } from "./Kernel";
-import type { Shell } from "./Shell";
 
 /** Context handed to a command when it runs. */
 export interface CommandContext {
-  graphics: Graphics;
+  terminal: Terminal;
   kernel: Kernel;
-  shell: Shell;
   args: string[];
 }
 
@@ -31,28 +29,38 @@ export function commandNames(): string[] {
 // ---------------------------------------------------------------------------
 
 registerCommand("help", (ctx) => {
-  ctx.shell.writeLine("available commands:");
+  ctx.terminal.writeLine("available commands:");
   for (const name of commandNames()) {
-    ctx.shell.writeLine(`  ${name}`);
+    ctx.terminal.writeLine(`  ${name}`);
   }
 });
 
 registerCommand("clear", (ctx) => {
-  ctx.shell.clear();
+  ctx.terminal.clear();
 });
 
 registerCommand("echo", (ctx) => {
-  ctx.shell.writeLine(ctx.args.join(" "));
+  ctx.terminal.writeLine(ctx.args.join(" "));
 });
 
 registerCommand("about", (ctx) => {
-  ctx.shell.writeLine("CRT terminal portfolio");
-  ctx.shell.writeLine("a WebGL-powered virtual OS");
-  ctx.shell.writeLine("");
-  ctx.shell.writeLine("type `help` for commands, `demo` to run a process.");
+  ctx.terminal.writeLine("CRT terminal portfolio");
+  ctx.terminal.writeLine("a WebGL-powered virtual OS");
+  ctx.terminal.writeLine("");
+  ctx.terminal.writeLine("type `help` for commands, `demo` to run a process.");
+});
+
+registerCommand("neofetch", (ctx) => {
+  const { cols, rows } = ctx.terminal.graphics;
+  ctx.terminal.writeLine("shahab@crt");
+  ctx.terminal.writeLine("----------------");
+  ctx.terminal.writeLine(`os      CRT terminal portfolio`);
+  ctx.terminal.writeLine(`kernel  ${ctx.kernel.constructor.name}`);
+  ctx.terminal.writeLine(`screen  ${cols}x${rows}`);
+  ctx.terminal.writeLine(`shell   crt`);
 });
 
 registerCommand("ui", (ctx) => {
-  ctx.shell.writeLine("transitioning to modern UI...");
+  ctx.terminal.writeLine("transitioning to modern UI...");
   ctx.kernel.requestUi();
 });

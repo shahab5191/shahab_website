@@ -1,11 +1,13 @@
 import { TerminalGraphics } from "./core/TerminalGraphics";
+import { TerminalSession } from "./core/Terminal";
 import { Shell } from "./core/Shell";
 import { Kernel } from "./core/Kernel";
 import { registerCommand } from "./core/commands";
 import { Canvas2DRenderer, type Renderer } from "./core/Renderer";
 import { BounceDemo } from "./processes/BounceDemo";
-import type { KeyEvent } from "./core/types";
 import { TestProcess } from "./processes/TestProcess";
+import { GreetProcess } from "./processes/Greet";
+import type { KeyEvent } from "./core/types";
 
 function sanitizeKey(event: KeyboardEvent): KeyEvent | null {
   const { key } = event;
@@ -43,23 +45,25 @@ function boot(): void {
     cellWidth: 9,
     cellHeight: 16,
   });
-  const shell = new Shell(graphics);
-  const kernel = new Kernel(graphics, shell);
+  const terminal = new TerminalSession(graphics);
+  const shell = new Shell();
+  const kernel = new Kernel(graphics, terminal, shell);
   const renderer: Renderer = new Canvas2DRenderer(screen);
 
   // Process-spawning commands are registered at bootstrap, keeping the core
   // command module free of process imports.
   registerCommand("demo", (ctx) => ctx.kernel.spawn(new BounceDemo()));
   registerCommand("test", (ctx) => ctx.kernel.spawn(new TestProcess()));
+  registerCommand("greet", (ctx) => ctx.kernel.spawn(new GreetProcess()));
 
   // Future: wired to the Three.js camera animation / DOM overlay.
   kernel.onUiRequest = () => {
     console.info("[kernel] ui transition requested (not yet implemented)");
   };
 
-  shell.writeLine("welcome to the CRT terminal");
-  shell.writeLine("type 'help' for commands, 'demo' to run a process");
-  shell.redraw();
+  terminal.writeLine("welcome to the CRT terminal");
+  terminal.writeLine("type 'help' for commands, 'demo' to run a process");
+  kernel.boot();
 
   const resize = () => {
     const dpr = window.devicePixelRatio || 1;

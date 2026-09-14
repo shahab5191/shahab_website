@@ -5,6 +5,8 @@
  * written against the contract without depending on concrete implementations.
  */
 
+import type { SignalControl, Signals } from "./Signals";
+
 /** Modifier keys held during a key event. */
 export interface Modifiers {
   ctrl: boolean;
@@ -58,28 +60,68 @@ export interface Graphics {
   clearScreen(color?: RetroColor): void;
 }
 
+/**
+ * The terminal (tty) handle handed to a running process. It is the stdio
+ * seam shared by the kernel, the shell, and every child process.
+ *
+ * Line-oriented programs use `readLine`/`writeLine`; full-screen programs use
+ * `nextKey`/`nextFrame`/`pollKeys` plus the `graphics` framebuffer. Line
+ * editing (echo, cursor, history, Ctrl+W) is provided here so any process
+ * awaiting `readLine` gets it for free, like a kernel line discipline.
+ */
+export interface Terminal {
+  /** Append text to stdout (scrollback). Embedded `\n` flushes full lines. */
+  write(text: string): void;
+  /** Append a line of text to stdout (scrollback). */
+  writeLine(text?: string): void;
+  /** Clear the scrollback and redraw. */
+  clear(): void;
+  /**
+   * Read a line of input (cooked mode). Renders `prompt` plus an editable
+   * buffer with echo, cursor movement, and history. Resolves on Enter.
+   */
+  readLine(prompt?: string): Promise<string>;
+  /** Read the next raw key (no echo), for full-screen programs. */
+  nextKey(): Promise<KeyEvent>;
+  /** Drain and return any buffered raw keys (non-blocking). */
+  pollKeys(): KeyEvent[];
+  /** Resolve with the elapsed seconds since the previous frame. */
+  nextFrame(): Promise<number>;
+  /** The framebuffer, for full-screen drawing. */
+  readonly graphics: Graphics;
+}
+
+/**
+ * The kernel-facing side of the tty: the methods the OS uses to deliver
+ * events to whatever is awaiting them. Held only by the `Kernel`; processes
+ * see the narrower `Terminal` handle.
+ */
+export interface TerminalControl extends Terminal {
+  /** Deliver a key event from the OS. */
+  pushKey(event: KeyEvent): void;
+  /** Deliver a frame tick (elapsed seconds) from the OS. */
+  pushFrame(deltaTime: number): void;
+  /** Bind the current foreground process's signal controller. */
+  attach(controller: SignalControl): void;
+}
+
 /** Arguments the OS passes to a process on spawn. */
 export interface SystemArgs {
   cols: number;
   rows: number;
   /** Call this to terminate the process and return control to the shell. */
   exit: (code?: number) => void;
+  /** The process's own signal handle (check `terminated`, install handlers). */
+  signals: Signals;
 }
 
 /**
- * The Process interface. Every interactive application (games, chat clients,
- * pagers) implements this so the OS can blindly route input and lifecycle
- * events to it.
+ * The Process interface. Every program (shell, games, CLI tools) implements it
+ * as an async coroutine: it suspends by awaiting `terminal` input or frames
+ * and resumes when the OS delivers them.
  */
 export interface Process {
-  /** Called when the process is spawned by the shell. */
-  init(graphics: Graphics, systemArgs: SystemArgs): void;
-  /** Receives raw keystrokes from the OS. */
-  handleInput(event: KeyEvent): void;
-  /** Optional: called per frame for physics/animations in games. */
-  update(deltaTime: number): void;
-  /** Called when the process exits or is killed by the OS. */
-  cleanup(): void;
+  run(terminal: Terminal, args: SystemArgs): Promise<void> | void;
 }
 
 /** Named colors shared across the terminal. */
