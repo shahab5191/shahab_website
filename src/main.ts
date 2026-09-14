@@ -7,6 +7,7 @@ import type { Renderer } from "./core/Renderer";
 import { ThreeRenderer } from "./core/ThreeRenderer";
 import { BounceDemo } from "./processes/BounceDemo";
 import { SnakeGame } from "./processes/Snake";
+import { TetrisGame } from "./processes/Tetris";
 import { TestProcess } from "./processes/TestProcess";
 import { GreetProcess } from "./processes/Greet";
 import type { KeyEvent } from "./core/types";
@@ -57,6 +58,7 @@ function boot(): void {
   // command module free of process imports.
   registerCommand("demo", (ctx) => ctx.kernel.spawn(new BounceDemo()));
   registerCommand("snake", (ctx) => ctx.kernel.spawn(new SnakeGame()));
+  registerCommand("tetris", (ctx) => ctx.kernel.spawn(new TetrisGame()));
   registerCommand("test", (ctx) => ctx.kernel.spawn(new TestProcess()));
   registerCommand("greet", (ctx) => ctx.kernel.spawn(new GreetProcess()));
   registerCommand("stdio", (ctx) => ctx.kernel.spawn(new StdioProcess()));
