@@ -23,15 +23,11 @@ export class ThreeRenderer implements Renderer {
   private texture: THREE.CanvasTexture;
   private composer: EffectComposer;
   private bloomPass: UnrealBloomPass;
-  private screenHeight: number = 0.0;
-  private screenWidth: number = 0.0;
-  private screenAspect: number = 0.0;
   private verticalStretchFactor: number = 1.5;
+  private screenMaterial!: THREE.ShaderMaterial;
+  private screen!: THREE.Mesh;
 
   constructor(canvas: HTMLCanvasElement) {
-    this.screenHeight = canvas.height;
-    this.screenWidth = canvas.width;
-    this.screenAspect = this.screenWidth / this.screenHeight;
     this.renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: false,
@@ -94,10 +90,10 @@ export class ThreeRenderer implements Renderer {
         uDistortion: { value: 0.0 },
         uChromaticAberration: { value: 0.0 },
         uVignette: { value: 0.0 },
-        scanlineHeight: {
-          value: this.screenHeight * this.verticalStretchFactor,
+        scanlineCount: {
+          value: 0.0,
         },
-        scanlineDimFactor: { value: 0.75 },
+        scanlineDimFactor: { value: 1.0 },
       },
       vertexShader: `
       varying vec2 vUv;
@@ -108,15 +104,15 @@ export class ThreeRenderer implements Renderer {
       `,
       fragmentShader: screenFrag,
     });
+    this.screenMaterial = material;
     const planeWidth = 3.6;
-    const planeHeight =
-      (planeWidth / this.screenAspect) * this.verticalStretchFactor;
     const screen = new THREE.Mesh(
-      new THREE.PlaneGeometry(planeWidth, planeHeight),
+      new THREE.PlaneGeometry(planeWidth, planeWidth),
       material,
     );
     screen.position.z = 0.26;
     this.scene.add(screen);
+    this.screen = screen;
   }
 
   resize(width: number, height: number): void {
@@ -128,6 +124,9 @@ export class ThreeRenderer implements Renderer {
   }
 
   render(graphics: TerminalGraphics): void {
+    this.screenMaterial.uniforms.scanlineCount!.value = graphics.height;
+    this.screen.scale.y =
+      this.verticalStretchFactor / (graphics.width / graphics.height);
     this.texture.image = graphics.getCanvas();
     this.texture.needsUpdate = true;
     this.composer.render();
