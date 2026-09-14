@@ -1,4 +1,8 @@
 import * as THREE from "three";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import type { TerminalGraphics } from "./TerminalGraphics";
 import type { Renderer } from "./Renderer";
 
@@ -7,15 +11,17 @@ import type { Renderer } from "./Renderer";
  * of a 3D CRT monitor. A `CanvasTexture` uploads the off-screen canvas onto a
  * plane mesh, sitting in front of a simple box body with a perspective camera.
  *
- * Later milestones bolt on the CRT shader (curvature, scanlines, chromatic
- * aberration), `EffectComposer` bloom, and the camera push-in for the UI
- * transition.
+ * Post-processing runs through an `EffectComposer`: `RenderPass` renders the
+ * scene into a float target, `UnrealBloomPass` extracts bright pixels and adds
+ * phosphor glow, and `OutputPass` tone-maps into sRGB for the screen.
  */
 export class ThreeRenderer implements Renderer {
   private renderer: THREE.WebGLRenderer;
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
   private texture: THREE.CanvasTexture;
+  private composer: EffectComposer;
+  private bloomPass: UnrealBloomPass;
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({
@@ -23,12 +29,13 @@ export class ThreeRenderer implements Renderer {
       antialias: false,
       powerPreference: "high-performance",
     });
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x050505);
 
     this.camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
-    this.camera.position.set(0, 0, 5);
+    this.camera.position.set(0, 0, 3);
     this.camera.lookAt(0, 0, 0);
 
     this.texture = new THREE.CanvasTexture(document.createElement("canvas"));
@@ -37,6 +44,17 @@ export class ThreeRenderer implements Renderer {
     this.texture.generateMipmaps = false;
 
     this.buildScene();
+
+    this.composer = new EffectComposer(this.renderer);
+    this.composer.addPass(new RenderPass(this.scene, this.camera));
+    this.bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(1, 1),
+      0.07, // strength
+      1, // radius
+      0.2, // threshold
+    );
+    this.composer.addPass(this.bloomPass);
+    this.composer.addPass(new OutputPass());
   }
 
   private buildScene(): void {
@@ -51,13 +69,7 @@ export class ThreeRenderer implements Renderer {
     );
     this.scene.add(body);
 
-    // Screen plane: sits on the front face of the box and receives the VRAM.
-    const screen = new THREE.Mesh(
-      new THREE.PlaneGeometry(3.6, 2.0),
-      new THREE.MeshBasicMaterial({ map: this.texture }),
-    );
-    screen.position.z = 0.26;
-    this.scene.add(screen);
+    this.buildScreen();
 
     // Simple lighting so the box reads as a 3D volume.
     this.scene.add(new THREE.AmbientLight(0xffffff, 0.4));
@@ -66,9 +78,47 @@ export class ThreeRenderer implements Renderer {
     this.scene.add(key);
   }
 
+  private buildScreen(): void {
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        tDiffuse: { value: this.texture },
+        uTime: { value: 0 },
+        uScanlines: { value: 400.0 },
+        uDistortion: { value: 0.0 },
+        uChromaticAberration: { value: 0.0 },
+        uVignette: { value: 0.0 },
+      },
+      vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+      `,
+      fragmentShader: `
+      uniform sampler2D tDiffuse;
+      uniform float uTime;
+      uniform float uScanlines;
+      uniform float uDistortion;
+      uniform float uChromaticAberration;
+      uniform float uVignette;
+      varying vec2 vUv;
+      void main() {
+        vec2 uv = vUv;
+        vec3 color = texture2D(tDiffuse, uv).rgb;
+        gl_FragColor = vec4(color, 1.0);
+      }
+      `,
+    });
+    const screen = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 2.0), material);
+    screen.position.z = 0.26;
+    this.scene.add(screen);
+  }
+
   resize(width: number, height: number): void {
     this.renderer.setPixelRatio(1);
     this.renderer.setSize(width, height, false);
+    this.composer.setSize(width, height);
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
   }
@@ -76,6 +126,6 @@ export class ThreeRenderer implements Renderer {
   render(graphics: TerminalGraphics): void {
     this.texture.image = graphics.getCanvas();
     this.texture.needsUpdate = true;
-    this.renderer.render(this.scene, this.camera);
+    this.composer.render();
   }
 }
