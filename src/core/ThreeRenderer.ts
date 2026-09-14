@@ -3,9 +3,11 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
+import { FullScreenQuad } from "three/examples/jsm/postprocessing/Pass.js";
 import type { TerminalGraphics } from "./TerminalGraphics";
 import type { Renderer } from "./Renderer";
 import { screenFrag } from "../shaders/screen.js";
+import { phosphorVert, phosphorFrag } from "../shaders/phosphor.js";
 import { getTheme } from "./theme.js";
 
 /** Aperture grille period, in CSS pixels per RGB triad. */
@@ -39,9 +41,18 @@ export class ThreeRenderer implements Renderer {
   private screenMaterial!: THREE.ShaderMaterial;
   private screen!: THREE.Mesh;
 
+  // Phosphor persistence: ping-pong accumulation of the raw VRAM texture,
+  // applied before the CRT effects in the screen shader.
+  private accumWrite!: THREE.WebGLRenderTarget;
+  private accumRead!: THREE.WebGLRenderTarget;
+  private phosphorMaterial: THREE.ShaderMaterial;
+  private phosphorQuad: FullScreenQuad;
+  private phosphorReady = false;
+
   // Mouse parallax + right-drag zoom state.
   private mouseX = 0;
   private mouseY = 0;
+  private isLeftDragging = false;
   private isRightDragging = false;
   private lastMouseY = 0;
   private zoomTarget = 3;
@@ -62,6 +73,7 @@ export class ThreeRenderer implements Renderer {
   };
 
   private onMouseDown = (e: MouseEvent): void => {
+    if (e.button === 0) this.isLeftDragging = true;
     if (e.button === 2) {
       this.isRightDragging = true;
       this.lastMouseY = e.clientY;
@@ -69,6 +81,7 @@ export class ThreeRenderer implements Renderer {
   };
 
   private onMouseUp = (e: MouseEvent): void => {
+    if (e.button === 0) this.isLeftDragging = false;
     if (e.button === 2) this.isRightDragging = false;
   };
 
@@ -98,6 +111,19 @@ export class ThreeRenderer implements Renderer {
     this.texture.magFilter = THREE.NearestFilter;
     this.texture.generateMipmaps = false;
 
+    this.phosphorMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        uDecay: { value: new THREE.Vector3(0.7, 0.77, 0.55) },
+        tPrev: { value: null },
+        tCurr: { value: this.texture },
+      },
+      vertexShader: phosphorVert,
+      fragmentShader: phosphorFrag,
+      depthTest: false,
+      depthWrite: false,
+    });
+    this.phosphorQuad = new FullScreenQuad(this.phosphorMaterial);
+
     this.buildScene();
 
     this.composer = new EffectComposer(this.renderer);
@@ -116,6 +142,7 @@ export class ThreeRenderer implements Renderer {
     window.addEventListener("mouseup", this.onMouseUp);
     window.addEventListener("contextmenu", this.onContextMenu);
     window.addEventListener("blur", () => {
+      this.isLeftDragging = false;
       this.isRightDragging = false;
     });
   }
@@ -190,10 +217,10 @@ export class ThreeRenderer implements Renderer {
   }
 
   /**
-   * Smoothly steer the camera from the mouse. The look-at target tracks the
-   * cursor quickly (the "eyes" pan), while the camera position drifts toward
-   * the same side far more slowly (the "head" follows), producing a subtle
-   * parallax as if glancing around a real monitor.
+   * Smoothly steer the camera from the mouse. While the left button is held,
+   * the look-at target tracks the cursor quickly (the "eyes" pan) and the
+   * camera position drifts toward the same side far more slowly (the "head"
+   * follows). Releasing returns the view to center.
    */
   private updateCamera(dt: number): void {
     const lookSpeed = 10;
@@ -204,15 +231,25 @@ export class ThreeRenderer implements Renderer {
     const camExtentX = 0.3;
     const camExtentY = 0.18;
 
-    this.smoothLookX += (this.mouseX * lookExtentX - this.smoothLookX) * (1 - Math.exp(-dt * lookSpeed));
-    this.smoothLookY += (this.mouseY * lookExtentY - this.smoothLookY) * (1 - Math.exp(-dt * lookSpeed));
-    this.smoothCamX += (this.mouseX * camExtentX - this.smoothCamX) * (1 - Math.exp(-dt * camSpeed));
-    this.smoothCamY += (this.mouseY * camExtentY - this.smoothCamY) * (1 - Math.exp(-dt * camSpeed));
+    const lookTargetX = this.isLeftDragging ? this.mouseX * lookExtentX : 0;
+    const lookTargetY = this.isLeftDragging ? this.mouseY * lookExtentY : 0;
+    const camTargetX = this.isLeftDragging ? this.mouseX * camExtentX : 0;
+    const camTargetY = this.isLeftDragging ? this.mouseY * camExtentY : 0;
+
+    this.smoothLookX +=
+      (lookTargetX - this.smoothLookX) * (1 - Math.exp(-dt * lookSpeed));
+    this.smoothLookY +=
+      (lookTargetY - this.smoothLookY) * (1 - Math.exp(-dt * lookSpeed));
+    this.smoothCamX +=
+      (camTargetX - this.smoothCamX) * (1 - Math.exp(-dt * camSpeed));
+    this.smoothCamY +=
+      (camTargetY - this.smoothCamY) * (1 - Math.exp(-dt * camSpeed));
 
     const minZoom = 2.2;
     const maxZoom = 6;
     this.zoomTarget = Math.min(maxZoom, Math.max(minZoom, this.zoomTarget));
-    this.smoothZoom += (this.zoomTarget - this.smoothZoom) * (1 - Math.exp(-dt * zoomSpeed));
+    this.smoothZoom +=
+      (this.zoomTarget - this.smoothZoom) * (1 - Math.exp(-dt * zoomSpeed));
 
     this.camera.position.set(this.smoothCamX, this.smoothCamY, this.smoothZoom);
     this.camera.lookAt(this.smoothLookX, this.smoothLookY, 0);
@@ -225,6 +262,40 @@ export class ThreeRenderer implements Renderer {
     this.screenMaterial.uniforms.uMaskPitch!.value = maskPitch();
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
+  }
+
+  /** Lazily create and clear the ping-pong accumulation targets at VRAM size. */
+  private ensurePhosphorTargets(width: number, height: number): void {
+    if (this.phosphorReady) return;
+    this.accumWrite = new THREE.WebGLRenderTarget(width, height, {
+      minFilter: THREE.NearestFilter,
+      magFilter: THREE.NearestFilter,
+      type: THREE.HalfFloatType,
+      depthBuffer: false,
+    });
+    this.accumRead = this.accumWrite.clone();
+    this.renderer.setRenderTarget(this.accumWrite);
+    this.renderer.clear();
+    this.renderer.setRenderTarget(this.accumRead);
+    this.renderer.clear();
+    this.renderer.setRenderTarget(null);
+    this.phosphorReady = true;
+  }
+
+  /**
+   * Composite the current VRAM frame onto the decaying previous frame, storing
+   * the result back for next frame and feeding it to the screen shader.
+   */
+  private updatePhosphor(): void {
+    this.phosphorMaterial.uniforms.tCurr!.value = this.texture;
+    this.phosphorMaterial.uniforms.tPrev!.value = this.accumRead.texture;
+    this.renderer.setRenderTarget(this.accumWrite);
+    this.phosphorQuad.render(this.renderer);
+    this.renderer.setRenderTarget(null);
+    this.screenMaterial.uniforms.tDiffuse!.value = this.accumWrite.texture;
+    const tmp = this.accumWrite;
+    this.accumWrite = this.accumRead;
+    this.accumRead = tmp;
   }
 
   render(graphics: TerminalGraphics): void {
@@ -243,6 +314,8 @@ export class ThreeRenderer implements Renderer {
       this.texture.image = graphics.getCanvas();
       this.texture.needsUpdate = true;
     }
+    this.ensurePhosphorTargets(graphics.width, graphics.height);
+    this.updatePhosphor();
     this.screenMaterial.uniforms.uTime!.value = now / 1000;
     this.composer.render();
   }
