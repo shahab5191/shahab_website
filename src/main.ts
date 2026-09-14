@@ -8,6 +8,7 @@ import { BounceDemo } from "./processes/BounceDemo";
 import { TestProcess } from "./processes/TestProcess";
 import { GreetProcess } from "./processes/Greet";
 import type { KeyEvent } from "./core/types";
+import { StdioProcess } from "./processes/TestStdioProcess";
 
 function sanitizeKey(event: KeyboardEvent): KeyEvent | null {
   const { key } = event;
@@ -55,6 +56,7 @@ function boot(): void {
   registerCommand("demo", (ctx) => ctx.kernel.spawn(new BounceDemo()));
   registerCommand("test", (ctx) => ctx.kernel.spawn(new TestProcess()));
   registerCommand("greet", (ctx) => ctx.kernel.spawn(new GreetProcess()));
+  registerCommand("stdio", (ctx) => ctx.kernel.spawn(new StdioProcess()));
 
   // Future: wired to the Three.js camera animation / DOM overlay.
   kernel.onUiRequest = () => {
