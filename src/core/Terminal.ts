@@ -211,12 +211,13 @@ export class TerminalSession implements Terminal {
     const reserve = this.readLineWaiter ? 1 : 0;
     const maxOutputRows = g.rows - reserve;
     const start = Math.max(0, this.lines.length - maxOutputRows);
+    let end = Math.min(this.lines.length, start + maxOutputRows);
     for (let i = start; i < this.lines.length; i++) {
       g.drawText(0, i - start, this.lines[i] ?? "", Palette.foreground);
     }
 
     if (this.readLineWaiter) {
-      const row = g.rows - 1;
+      const row = Math.min(end + 1, maxOutputRows);
       g.drawText(0, row, this.prompt, Palette.accent);
       g.drawText(this.prompt.length, row, this.buffer, Palette.foreground);
 
