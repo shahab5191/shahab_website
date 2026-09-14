@@ -86,9 +86,20 @@ describe("TerminalSession", () => {
   });
 
   it("wraps long output lines into scrollback rows", () => {
-    const terminal = new TerminalSession(new MockGraphics(4, 10));
+    const terminal = new TerminalSession(new MockGraphics(6, 10));
     terminal.writeLine("abcdefgh");
     expect(terminal.scrollback).toEqual(["abcd", "efgh"]);
+  });
+
+  it("draws output one cell inside the margin", () => {
+    const graphics = new MockGraphics();
+    const terminal = new TerminalSession(graphics);
+    terminal.writeLine("hi");
+    expect(graphics.drawTextCalls[0]).toMatchObject({
+      col: 1,
+      row: 1,
+      text: "hi",
+    });
   });
 
   it("queues raw keys for pollKeys when no line is being read", () => {

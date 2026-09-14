@@ -56,8 +56,23 @@ export class TerminalSession implements Terminal {
   private blinkElapsed = 0;
   private cursorVisible = true;
 
+  readonly marginVertical: number;
+  readonly marginHorizontal: number;
+
   constructor(graphics: Graphics) {
     this.graphics = graphics;
+    this.marginVertical = 1;
+    this.marginHorizontal = 1;
+  }
+
+  /** Usable columns once the horizontal margins are reserved. */
+  private get textCols(): number {
+    return this.graphics.cols - 2 * this.marginHorizontal;
+  }
+
+  /** Usable rows once the vertical margins are reserved. */
+  private get textRows(): number {
+    return this.graphics.rows - 2 * this.marginVertical;
   }
 
   /** Copy of the scrollback rows (exposed for tests/tools). */
@@ -81,7 +96,7 @@ export class TerminalSession implements Terminal {
     if (idx !== -1) {
       const complete = this.pending.slice(0, idx);
       this.pending = this.pending.slice(idx + 1);
-      for (const chunk of wrapText(complete, this.graphics.cols)) {
+      for (const chunk of wrapText(complete, this.textCols)) {
         this.pushLine(chunk);
       }
     }
@@ -209,7 +224,7 @@ export class TerminalSession implements Terminal {
 
   private flushPending(): void {
     if (this.pending === "") return;
-    for (const chunk of wrapText(this.pending, this.graphics.cols)) {
+    for (const chunk of wrapText(this.pending, this.textCols)) {
       this.pushLine(chunk);
     }
     this.pending = "";
@@ -228,30 +243,50 @@ export class TerminalSession implements Terminal {
     g.clearScreen(theme.background);
 
     const reserve = this.readLineWaiter ? 1 : 0;
-    const maxOutputRows = g.rows - reserve;
+    const maxOutputRows = this.textRows - reserve;
     const start = Math.max(0, this.lines.length - maxOutputRows);
     let end = Math.min(this.lines.length, start + maxOutputRows);
     for (let i = start; i < this.lines.length; i++) {
-      g.drawText(0, i - start, this.lines[i] ?? "", theme.foreground);
+      g.drawText(
+        this.marginHorizontal,
+        this.marginVertical + (i - start),
+        this.lines[i] ?? "",
+        theme.foreground,
+      );
     }
 
     if (this.readLineWaiter) {
       const row = Math.min(end + 1, maxOutputRows);
-      g.drawText(0, row, this.prompt, theme.accent);
-      g.drawText(this.prompt.length, row, this.buffer, theme.foreground);
+      g.drawText(
+        this.marginHorizontal,
+        this.marginVertical + row,
+        this.prompt,
+        theme.accent,
+      );
+      g.drawText(
+        this.marginHorizontal + this.prompt.length,
+        this.marginVertical + row,
+        this.buffer,
+        theme.foreground,
+      );
 
       if (this.cursorVisible) {
         const cursorCol = this.prompt.length + this.cursor;
         g.drawRect(
-          cursorCol * g.cellWidth,
-          row * g.cellHeight,
+          (this.marginHorizontal + cursorCol) * g.cellWidth,
+          (this.marginVertical + row) * g.cellHeight,
           g.cellWidth,
           g.cellHeight,
           theme.foreground,
         );
         const charUnder = this.buffer[this.cursor];
         if (charUnder) {
-          g.drawText(cursorCol, row, charUnder, theme.background);
+          g.drawText(
+            this.marginHorizontal + cursorCol,
+            this.marginVertical + row,
+            charUnder,
+            theme.background,
+          );
         }
       }
     }
@@ -263,7 +298,7 @@ export class TerminalSession implements Terminal {
     if (!waiter) return;
     const line = this.buffer;
     const full = this.prompt + line;
-    for (const chunk of wrapText(full, this.graphics.cols)) {
+    for (const chunk of wrapText(full, this.textCols)) {
       this.pushLine(chunk);
     }
     if (line.trim() !== "" && this.history[this.history.length - 1] !== line) {

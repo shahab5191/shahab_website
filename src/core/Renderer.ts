@@ -48,9 +48,15 @@ export class Canvas2DRenderer implements Renderer {
 
     // Integer scaling keeps every VRAM pixel a uniform square, so the image
     // stays crisp at any display size (letterboxed to preserve aspect ratio).
+    // One character of margin is reserved on each side of the content.
     const scale = Math.max(
       1,
-      Math.min(dw / src.width, dh / src.height),
+      Math.floor(
+        Math.min(
+          dw / (src.width + 2 * graphics.cellWidth),
+          dh / (src.height + 2 * graphics.cellHeight),
+        ),
+      ),
     );
     console.log("scale", scale);
     const w = src.width * scale;
