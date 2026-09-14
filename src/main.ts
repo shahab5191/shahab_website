@@ -94,9 +94,7 @@ function boot(): void {
     const deltaTime = Math.min((now - last) / 1000, 0.1);
     last = now;
     kernel.update(deltaTime);
-    if (graphics.consumeDirty()) {
-      renderer.render(graphics);
-    }
+    renderer.render(graphics);
     requestAnimationFrame(loop);
   };
   requestAnimationFrame(loop);

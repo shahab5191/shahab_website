@@ -166,7 +166,7 @@ const PHOSPHOR: ThemeColors = {
 const themes: Record<string, Theme> = {
   default: defineTheme({
     name: "default",
-    bloomFactor: 0.15,
+    bloomFactor: 0.2,
     colors: VIC20,
     roles: {
       background: "Black",

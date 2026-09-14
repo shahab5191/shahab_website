@@ -111,6 +111,9 @@ export class ThreeRenderer implements Renderer {
         uAspect: { value: 1.0 },
         uMaskPitch: { value: maskPitch() },
         uMaskStrength: { value: 0.7 },
+        uBandSpeed: { value: 0.06 },
+        uBandHeight: { value: 0.14 },
+        uBandStrength: { value: 0.35 },
       },
       vertexShader: `
       varying vec2 vUv;
@@ -152,8 +155,11 @@ export class ThreeRenderer implements Renderer {
     this.screenMaterial.uniforms.uAspect!.value =
       screenAspect / this.verticalStretchFactor;
     this.screenMaterial.uniforms.screenWidth!.value = graphics.width;
-    this.texture.image = graphics.getCanvas();
-    this.texture.needsUpdate = true;
+    if (graphics.consumeDirty()) {
+      this.texture.image = graphics.getCanvas();
+      this.texture.needsUpdate = true;
+    }
+    this.screenMaterial.uniforms.uTime!.value = performance.now() / 1000;
     this.composer.render();
   }
 }

@@ -11,6 +11,9 @@ uniform float uVignetteDimFactor;
 uniform float screenWidth;
 uniform float uMaskPitch;
 uniform float uMaskStrength;
+uniform float uBandSpeed;
+uniform float uBandHeight;
+uniform float uBandStrength;
 varying vec2 vUv;
 
 const float TAU = 6.2831853;
@@ -54,6 +57,12 @@ void main() {
   float distanceToCenter = distance(uv, vec2(0.5));
   float vignette = smoothstep(0.2, uVignetteDimFactor, distanceToCenter);
   color *= 1.0 - uVignette * vignette;
+
+  float bandPhase = fract(uTime * uBandSpeed * -1.0);
+  float bandDelta = fract(uv.y - bandPhase + 0.5) - 0.5;
+  float bandDist = abs(bandDelta);
+  float bandDarken = smoothstep(0.2, 0.0, bandDist);
+  color *= 1.0 - uBandStrength * bandDarken;
 
   gl_FragColor = vec4(color, 1.0);
 }
