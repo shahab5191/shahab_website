@@ -39,6 +39,43 @@ export class ThreeRenderer implements Renderer {
   private screenMaterial!: THREE.ShaderMaterial;
   private screen!: THREE.Mesh;
 
+  // Mouse parallax + right-drag zoom state.
+  private mouseX = 0;
+  private mouseY = 0;
+  private isRightDragging = false;
+  private lastMouseY = 0;
+  private zoomTarget = 3;
+  private smoothZoom = 3;
+  private smoothLookX = 0;
+  private smoothLookY = 0;
+  private smoothCamX = 0;
+  private smoothCamY = 0;
+  private lastTime = performance.now();
+
+  private onMouseMove = (e: MouseEvent): void => {
+    this.mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+    this.mouseY = 1 - (e.clientY / window.innerHeight) * 2;
+    if (this.isRightDragging) {
+      this.zoomTarget += (e.clientY - this.lastMouseY) * 0.01;
+    }
+    this.lastMouseY = e.clientY;
+  };
+
+  private onMouseDown = (e: MouseEvent): void => {
+    if (e.button === 2) {
+      this.isRightDragging = true;
+      this.lastMouseY = e.clientY;
+    }
+  };
+
+  private onMouseUp = (e: MouseEvent): void => {
+    if (e.button === 2) this.isRightDragging = false;
+  };
+
+  private onContextMenu = (e: Event): void => {
+    e.preventDefault();
+  };
+
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({
       canvas,
@@ -73,6 +110,14 @@ export class ThreeRenderer implements Renderer {
     );
     this.composer.addPass(this.bloomPass);
     this.composer.addPass(new OutputPass());
+
+    window.addEventListener("mousemove", this.onMouseMove);
+    window.addEventListener("mousedown", this.onMouseDown);
+    window.addEventListener("mouseup", this.onMouseUp);
+    window.addEventListener("contextmenu", this.onContextMenu);
+    window.addEventListener("blur", () => {
+      this.isRightDragging = false;
+    });
   }
 
   private buildScene(): void {
@@ -144,6 +189,35 @@ export class ThreeRenderer implements Renderer {
     this.bloomPass.strength = factor;
   }
 
+  /**
+   * Smoothly steer the camera from the mouse. The look-at target tracks the
+   * cursor quickly (the "eyes" pan), while the camera position drifts toward
+   * the same side far more slowly (the "head" follows), producing a subtle
+   * parallax as if glancing around a real monitor.
+   */
+  private updateCamera(dt: number): void {
+    const lookSpeed = 10;
+    const camSpeed = 2;
+    const zoomSpeed = 12;
+    const lookExtentX = 0.8;
+    const lookExtentY = 0.5;
+    const camExtentX = 0.3;
+    const camExtentY = 0.18;
+
+    this.smoothLookX += (this.mouseX * lookExtentX - this.smoothLookX) * (1 - Math.exp(-dt * lookSpeed));
+    this.smoothLookY += (this.mouseY * lookExtentY - this.smoothLookY) * (1 - Math.exp(-dt * lookSpeed));
+    this.smoothCamX += (this.mouseX * camExtentX - this.smoothCamX) * (1 - Math.exp(-dt * camSpeed));
+    this.smoothCamY += (this.mouseY * camExtentY - this.smoothCamY) * (1 - Math.exp(-dt * camSpeed));
+
+    const minZoom = 2.2;
+    const maxZoom = 6;
+    this.zoomTarget = Math.min(maxZoom, Math.max(minZoom, this.zoomTarget));
+    this.smoothZoom += (this.zoomTarget - this.smoothZoom) * (1 - Math.exp(-dt * zoomSpeed));
+
+    this.camera.position.set(this.smoothCamX, this.smoothCamY, this.smoothZoom);
+    this.camera.lookAt(this.smoothLookX, this.smoothLookY, 0);
+  }
+
   resize(width: number, height: number): void {
     this.renderer.setPixelRatio(1);
     this.renderer.setSize(width, height, false);
@@ -154,6 +228,11 @@ export class ThreeRenderer implements Renderer {
   }
 
   render(graphics: TerminalGraphics): void {
+    const now = performance.now();
+    const dt = Math.min((now - this.lastTime) / 1000, 0.1);
+    this.lastTime = now;
+    this.updateCamera(dt);
+
     this.screenMaterial.uniforms.scanlineCount!.value = graphics.height;
     const screenAspect = graphics.width / graphics.height;
     this.screen.scale.y = this.verticalStretchFactor / screenAspect;
@@ -164,7 +243,7 @@ export class ThreeRenderer implements Renderer {
       this.texture.image = graphics.getCanvas();
       this.texture.needsUpdate = true;
     }
-    this.screenMaterial.uniforms.uTime!.value = performance.now() / 1000;
+    this.screenMaterial.uniforms.uTime!.value = now / 1000;
     this.composer.render();
   }
 }
