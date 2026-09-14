@@ -31,60 +31,12 @@ export function commandNames(): string[] {
 // Built-in commands
 // ---------------------------------------------------------------------------
 
-registerCommand("help", (ctx) => {
-  const t = ctx.terminal;
-
-  // CP437 box-drawing horizontal line (U+2500 maps to glyph 0xC4).
-  const divider = "{dim}" + String.fromCharCode(0xc4).repeat(42) + "{/}";
-
-  const groups: [string, string][][] = [
-    [
-      ["about", "who I am"],
-      ["neofetch", "system information"],
-      ["theme", "switch color theme"],
-      ["ui", "open the modern UI"],
-      ["help", "show this help"],
-    ],
-    [
-      ["demo", "run the bouncing demo"],
-      ["snake", "play snake"],
-      ["blocks", "play falling blocks"],
-      ["echo", "print a line"],
-      ["clear", "clear the terminal"],
-    ],
-  ];
-
-  const nameWidth = 15;
-
-  t.writeLine();
-  t.writeLine("{accent}AVAILABLE COMMANDS{/}");
-  t.writeLine(divider);
-
-  groups.forEach((entries, gi) => {
-    for (const [name, desc] of entries) {
-      t.writeLine(
-        `  {accent}${name}{/}${" ".repeat(nameWidth - name.length)}${desc}`,
-      );
-    }
-    if (gi < groups.length - 1) {
-      t.writeLine(divider);
-    }
-  });
-});
-
 registerCommand("clear", (ctx) => {
   ctx.terminal.clear();
 });
 
 registerCommand("echo", (ctx) => {
   ctx.terminal.writeLine(ctx.args.join(" "));
-});
-
-registerCommand("about", (ctx) => {
-  ctx.terminal.writeLine("CRT terminal portfolio");
-  ctx.terminal.writeLine("a WebGL-powered virtual OS");
-  ctx.terminal.writeLine("");
-  ctx.terminal.writeLine("type `help` for commands, `demo` to run a process.");
 });
 
 registerCommand("neofetch", (ctx) => {

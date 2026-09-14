@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Shell } from "../src/core/Shell";
 import { Kernel } from "../src/core/Kernel";
 import { getCommand, commandNames } from "../src/core/commands";
+import "../src/core/portfolio";
 import { TerminalSession, wrapText } from "../src/core/Terminal";
 import { MockGraphics } from "./helpers/mockGraphics";
 import type { KeyEvent, Process } from "../src/core/types";
@@ -238,7 +239,20 @@ describe("Kernel", () => {
 
 describe("command registry", () => {
   it("registers the built-in commands", () => {
-    for (const name of ["help", "clear", "echo", "about", "neofetch", "ui"]) {
+    for (const name of [
+      "help",
+      "clear",
+      "echo",
+      "about",
+      "neofetch",
+      "ui",
+      "experience",
+      "resume",
+      "skills",
+      "projects",
+      "contact",
+      "whoami",
+    ]) {
       expect(getCommand(name)).toBeTypeOf("function");
     }
   });

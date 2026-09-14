@@ -5,6 +5,7 @@ import type { SignalControl } from "./Signals";
 
 const MAX_SCROLLBACK = 500;
 const BLINK_INTERVAL = 0.5;
+const SCROLL_STEP = 3;
 
 // CP437 glyphs used for the scrollbar (U+2588/U+2592 map to these in the font).
 const BLOCK = String.fromCharCode(0xdb);
@@ -141,6 +142,8 @@ export class TerminalSession implements Terminal {
   private blinkElapsed = 0;
   private cursorVisible = true;
   private scrollOffset = 0;
+  private paging = false;
+  private commandBaseline = 0;
 
   readonly marginVertical: number;
   readonly marginHorizontal: number;
@@ -201,6 +204,8 @@ export class TerminalSession implements Terminal {
     this.lines = [];
     this.pending = "";
     this.scrollOffset = 0;
+    this.paging = false;
+    this.commandBaseline = 0;
     this.redraw();
   }
 
@@ -219,6 +224,19 @@ export class TerminalSession implements Terminal {
       this.readLineWaiter = { resolve, reject };
       this.cursorVisible = true;
       this.blinkElapsed = 0;
+
+      // If this command produced more than one screen of output, pin the view
+      // to its first page and enter the pager (SPACE advances).
+      const pageRows = this.textRows - 1;
+      const overflow = this.lines.length - this.commandBaseline;
+      if (overflow > pageRows) {
+        this.paging = true;
+        this.scrollOffset = overflow - pageRows;
+      } else {
+        this.paging = false;
+        this.scrollOffset = 0;
+      }
+
       this.redraw();
     });
   }
@@ -372,38 +390,53 @@ export class TerminalSession implements Terminal {
 
     if (this.readLineWaiter) {
       const row = maxOutputRows;
-      g.drawText(
-        this.marginHorizontal,
-        this.marginVertical + row,
-        this.prompt,
-        theme.accent,
-      );
-      g.drawText(
-        this.marginHorizontal + this.prompt.length,
-        this.marginVertical + row,
-        this.buffer,
-        theme.foreground,
-      );
-
-      if (this.cursorVisible) {
-        const cursorCol = this.prompt.length + this.cursor;
-        g.drawRect(
-          (this.marginHorizontal + cursorCol) * g.cellWidth,
-          (this.marginVertical + row) * g.cellHeight,
-          g.cellWidth,
-          g.cellHeight,
+      if (this.paging) {
+        const atEnd = this.scrollOffset === 0;
+        const hint = atEnd
+          ? "END - press SPACE to continue"
+          : "press SPACE for next page";
+        const col = this.marginHorizontal + Math.floor((this.textCols - hint.length) / 2);
+        g.drawText(col, this.marginVertical + row, hint, theme.accent);
+      } else {
+        g.drawText(
+          this.marginHorizontal,
+          this.marginVertical + row,
+          this.prompt,
+          theme.accent,
+        );
+        g.drawText(
+          this.marginHorizontal + this.prompt.length,
+          this.marginVertical + row,
+          this.buffer,
           theme.foreground,
         );
-        const charUnder = this.buffer[this.cursor];
-        if (charUnder) {
-          g.drawText(
-            this.marginHorizontal + cursorCol,
-            this.marginVertical + row,
-            charUnder,
-            theme.background,
+
+        if (this.cursorVisible) {
+          const cursorCol = this.prompt.length + this.cursor;
+          g.drawRect(
+            (this.marginHorizontal + cursorCol) * g.cellWidth,
+            (this.marginVertical + row) * g.cellHeight,
+            g.cellWidth,
+            g.cellHeight,
+            theme.foreground,
           );
+          const charUnder = this.buffer[this.cursor];
+          if (charUnder) {
+            g.drawText(
+              this.marginHorizontal + cursorCol,
+              this.marginVertical + row,
+              charUnder,
+              theme.background,
+            );
+          }
         }
       }
+    }
+
+    // Scroll hint at the bottom-right when the scrollback overflows.
+    if (this.lines.length > this.maxOutputRows) {
+      const hint = "PgUp/PgDn scroll";
+      g.drawText(g.cols - 1 - hint.length, g.rows - 1, hint, theme.dim);
     }
   }
 
@@ -445,6 +478,8 @@ export class TerminalSession implements Terminal {
       this.pushRow(row);
     }
     this.scrollOffset = 0;
+    this.paging = false;
+    this.commandBaseline = this.lines.length;
     if (line.trim() !== "" && this.history[this.history.length - 1] !== line) {
       this.history.push(line);
     }
@@ -457,6 +492,10 @@ export class TerminalSession implements Terminal {
   }
 
   private handleEditorKey(event: KeyEvent): void {
+    if (this.paging) {
+      this.handlePagerKey(event.key);
+      return;
+    }
     const { key, modifiers } = event;
     this.cursorVisible = true;
     this.blinkElapsed = 0;
@@ -496,10 +535,10 @@ export class TerminalSession implements Terminal {
         this.cursor = this.buffer.length;
         break;
       case "PageUp":
-        this.scrollByPage(1);
+        this.scrollByLines(1);
         break;
       case "PageDown":
-        this.scrollByPage(-1);
+        this.scrollByLines(-1);
         break;
       case "Delete":
         this.buffer =
@@ -541,14 +580,44 @@ export class TerminalSession implements Terminal {
     this.redraw();
   }
 
-  /** Scroll the view by `dir` pages: +1 up (older), -1 down (newer). */
-  private scrollByPage(dir: number): void {
+  /** Scroll the view by `dir * SCROLL_STEP` lines: +1 up (older), -1 down. */
+  private scrollByLines(dir: number): void {
     const maxScroll = Math.max(0, this.lines.length - this.maxOutputRows);
-    const page = Math.max(1, this.maxOutputRows - 1);
     this.scrollOffset = Math.min(
       maxScroll,
-      Math.max(0, this.scrollOffset + dir * page),
+      Math.max(0, this.scrollOffset + dir * SCROLL_STEP),
     );
+  }
+
+  /** Handle keys while the pager is active (SPACE advances a page). */
+  private handlePagerKey(key: string): void {
+    switch (key) {
+      case " ":
+        this.pagerNext();
+        break;
+      case "PageUp":
+        this.scrollByLines(1);
+        break;
+      case "PageDown":
+        this.scrollByLines(-1);
+        break;
+      case "Enter":
+      case "q":
+      case "Q":
+        this.paging = false;
+        this.scrollOffset = 0;
+        break;
+      default:
+        break;
+    }
+    this.redraw();
+  }
+
+  /** Advance the pager one page; exit once the last page is reached. */
+  private pagerNext(): void {
+    const page = Math.max(1, this.maxOutputRows - 1);
+    this.scrollOffset = Math.max(0, this.scrollOffset - page);
+    if (this.scrollOffset === 0) this.paging = false;
   }
 
   private deleteWordBeforeCursor(): void {

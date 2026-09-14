@@ -3,6 +3,7 @@ import { TerminalSession } from "./core/Terminal";
 import { Shell } from "./core/Shell";
 import { Kernel } from "./core/Kernel";
 import { registerCommand } from "./core/commands";
+import "./core/portfolio";
 import type { Renderer } from "./core/Renderer";
 import { ThreeRenderer } from "./core/ThreeRenderer";
 import { BounceDemo } from "./processes/BounceDemo";
