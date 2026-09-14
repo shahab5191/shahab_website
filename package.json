@@ -12,8 +12,12 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/three": "^0.186.0",
     "typescript": "^5.6.3",
     "vite": "^6.0.0",
     "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "three": "^0.186.0"
   }
 }

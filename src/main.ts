@@ -3,7 +3,8 @@ import { TerminalSession } from "./core/Terminal";
 import { Shell } from "./core/Shell";
 import { Kernel } from "./core/Kernel";
 import { registerCommand } from "./core/commands";
-import { Canvas2DRenderer, type Renderer } from "./core/Renderer";
+import type { Renderer } from "./core/Renderer";
+import { ThreeRenderer } from "./core/ThreeRenderer";
 import { BounceDemo } from "./processes/BounceDemo";
 import { TestProcess } from "./processes/TestProcess";
 import { GreetProcess } from "./processes/Greet";
@@ -49,7 +50,7 @@ function boot(): void {
   const terminal = new TerminalSession(graphics);
   const shell = new Shell();
   const kernel = new Kernel(graphics, terminal, shell);
-  const renderer: Renderer = new Canvas2DRenderer(screen);
+  const renderer: Renderer = new ThreeRenderer(screen);
 
   // Process-spawning commands are registered at bootstrap, keeping the core
   // command module free of process imports.
