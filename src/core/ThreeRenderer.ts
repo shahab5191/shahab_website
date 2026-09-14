@@ -8,6 +8,17 @@ import type { Renderer } from "./Renderer";
 import { screenFrag } from "../shaders/screen.js";
 import { getTheme } from "./theme.js";
 
+/** Aperture grille period, in CSS pixels per RGB triad. */
+const MASK_PITCH_CSS_PX = 3.0;
+
+/**
+ * The grille period in device pixels. Phosphor pitch is fixed on the glass, so
+ * it is tied to the display rather than to the source resolution.
+ */
+function maskPitch(): number {
+  return MASK_PITCH_CSS_PX * (window.devicePixelRatio || 1);
+}
+
 /**
  * WebGL presentation layer: renders the VRAM (TerminalGraphics) as the screen
  * of a 3D CRT monitor. A `CanvasTexture` uploads the off-screen canvas onto a
@@ -43,10 +54,12 @@ export class ThreeRenderer implements Renderer {
     this.camera.position.set(0, 0, 3);
     this.camera.lookAt(0, 0, 0);
 
+    // No mipmaps: the shader snaps UVs, so mip selection from their
+    // derivatives seams at every texel boundary.
     this.texture = new THREE.CanvasTexture(document.createElement("canvas"));
-    this.texture.minFilter = THREE.NearestMipmapLinearFilter;
+    this.texture.minFilter = THREE.LinearFilter;
     this.texture.magFilter = THREE.NearestFilter;
-    this.texture.generateMipmaps = true;
+    this.texture.generateMipmaps = false;
 
     this.buildScene();
 
@@ -94,7 +107,10 @@ export class ThreeRenderer implements Renderer {
         uVignetteDimFactor: { value: 0.9 },
         scanlineCount: { value: 0.0 },
         scanlineDimFactor: { value: 1.0 },
+        screenWidth: { value: this.texture.image!.width },
         uAspect: { value: 1.0 },
+        uMaskPitch: { value: maskPitch() },
+        uMaskStrength: { value: 0.7 },
       },
       vertexShader: `
       varying vec2 vUv;
@@ -124,6 +140,7 @@ export class ThreeRenderer implements Renderer {
     this.renderer.setPixelRatio(1);
     this.renderer.setSize(width, height, false);
     this.composer.setSize(width, height);
+    this.screenMaterial.uniforms.uMaskPitch!.value = maskPitch();
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
   }
@@ -134,6 +151,7 @@ export class ThreeRenderer implements Renderer {
     this.screen.scale.y = this.verticalStretchFactor / screenAspect;
     this.screenMaterial.uniforms.uAspect!.value =
       screenAspect / this.verticalStretchFactor;
+    this.screenMaterial.uniforms.screenWidth!.value = graphics.width;
     this.texture.image = graphics.getCanvas();
     this.texture.needsUpdate = true;
     this.composer.render();

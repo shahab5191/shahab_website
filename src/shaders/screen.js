@@ -8,7 +8,12 @@ uniform float uVignette;
 uniform float scanlineDimFactor;
 uniform float uAspect;
 uniform float uVignetteDimFactor;
+uniform float screenWidth;
+uniform float uMaskPitch;
+uniform float uMaskStrength;
 varying vec2 vUv;
+
+const float TAU = 6.2831853;
 
 // Bulges the center outward and compresses the edges, simulating convex CRT
 // glass. aspect keeps the curve circular in screen space rather than
@@ -28,7 +33,18 @@ void main() {
     gl_FragColor = vec4(0.0);
     return;
   }
-  vec3 color = texture2D(tDiffuse, uv).rgb;
+
+  vec2 snappedUv = vec2(
+      (floor(uv.x * screenWidth) + 0.5) / screenWidth,
+      (floor(uv.y * scanlineCount) + 0.5) / scanlineCount
+  );
+
+  vec3 color = texture2D(tDiffuse, snappedUv).rgb;
+  float phase = TAU * gl_FragCoord.x / uMaskPitch;
+  vec3 mask = 0.5 + 0.5 * cos(phase - vec3(0.0, TAU / 3.0, 2.0 * TAU / 3.0));
+  mask = mix(vec3(1.0), mask, uMaskStrength);
+  color *= mask / (1.0 - 0.5 * uMaskStrength);
+
   float y = uv.y * scanlineCount;
   float d = abs(fract(y) - 0.5);
   float aa = fwidth(y);
