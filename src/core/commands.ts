@@ -56,10 +56,9 @@ registerCommand("help", (ctx) => {
 
   const nameWidth = 15;
 
+  t.writeLine();
   t.writeLine("{accent}AVAILABLE COMMANDS{/}");
-  t.writeLine();
   t.writeLine(divider);
-  t.writeLine();
 
   groups.forEach((entries, gi) => {
     for (const [name, desc] of entries) {

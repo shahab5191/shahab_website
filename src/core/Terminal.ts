@@ -6,6 +6,10 @@ import type { SignalControl } from "./Signals";
 const MAX_SCROLLBACK = 500;
 const BLINK_INTERVAL = 0.5;
 
+// CP437 glyphs used for the scrollbar (U+2588/U+2592 map to these in the font).
+const BLOCK = String.fromCharCode(0xdb);
+const SHADE = String.fromCharCode(0xb1);
+
 /** Split text into display rows, hard-wrapping at `width` columns. */
 export function wrapText(text: string, width: number): string[] {
   const out: string[] = [];
@@ -136,6 +140,7 @@ export class TerminalSession implements Terminal {
 
   private blinkElapsed = 0;
   private cursorVisible = true;
+  private scrollOffset = 0;
 
   readonly marginVertical: number;
   readonly marginHorizontal: number;
@@ -156,6 +161,11 @@ export class TerminalSession implements Terminal {
     return this.graphics.rows - 2 * this.marginVertical;
   }
 
+  /** Output rows visible this frame (one fewer while the prompt is shown). */
+  private get maxOutputRows(): number {
+    return this.textRows - (this.readLineWaiter ? 1 : 0);
+  }
+
   /** Copy of the scrollback rows (exposed for tests/tools). */
   get scrollback(): readonly string[] {
     return this.lines.map((row) => row.map((s) => s.text).join(""));
@@ -172,6 +182,7 @@ export class TerminalSession implements Terminal {
   }
 
   write(text: string): void {
+    this.scrollOffset = 0;
     this.pending += text;
     const idx = this.pending.lastIndexOf("\n");
     if (idx !== -1) {
@@ -189,6 +200,7 @@ export class TerminalSession implements Terminal {
   clear(): void {
     this.lines = [];
     this.pending = "";
+    this.scrollOffset = 0;
     this.redraw();
   }
 
@@ -333,21 +345,33 @@ export class TerminalSession implements Terminal {
     const theme = getTheme();
     g.clearScreen(theme.background);
 
-    const reserve = this.readLineWaiter ? 1 : 0;
-    const maxOutputRows = this.textRows - reserve;
-    const start = Math.max(0, this.lines.length - maxOutputRows);
-    let end = Math.min(this.lines.length, start + maxOutputRows);
-    for (let i = start; i < this.lines.length; i++) {
+    const maxOutputRows = this.maxOutputRows;
+    const total = this.lines.length;
+    const maxScroll = Math.max(0, total - maxOutputRows);
+    if (this.scrollOffset > maxScroll) this.scrollOffset = maxScroll;
+
+    const viewEnd = total - this.scrollOffset;
+    const start = Math.max(0, viewEnd - maxOutputRows);
+    const end = Math.min(total, viewEnd);
+
+    for (let i = start; i < end; i++) {
       const row = this.lines[i] ?? [];
       let col = this.marginHorizontal;
       for (const seg of row) {
-        g.drawText(col, this.marginVertical + (i - start), seg.text, seg.color);
+        g.drawText(
+          col,
+          this.marginVertical + (i - start),
+          seg.text,
+          seg.color,
+        );
         col += seg.text.length;
       }
     }
 
+    this.drawScrollbar(start, maxOutputRows, total, maxScroll, theme);
+
     if (this.readLineWaiter) {
-      const row = Math.min(end + 1, maxOutputRows);
+      const row = maxOutputRows;
       g.drawText(
         this.marginHorizontal,
         this.marginVertical + row,
@@ -383,6 +407,31 @@ export class TerminalSession implements Terminal {
     }
   }
 
+  /** Render a one-column scrollbar in the right margin when content overflows. */
+  private drawScrollbar(
+    start: number,
+    maxOutputRows: number,
+    total: number,
+    maxScroll: number,
+    theme: ReturnType<typeof getTheme>,
+  ): void {
+    if (maxScroll <= 0) return;
+    const g = this.graphics;
+    const barCol = g.cols - 1;
+    const thumbSize = Math.max(1, Math.floor((maxOutputRows * maxOutputRows) / total));
+    const thumbTop = Math.floor((start * maxOutputRows) / total);
+
+    for (let r = 0; r < maxOutputRows; r++) {
+      const inThumb = r >= thumbTop && r < thumbTop + thumbSize;
+      g.drawText(
+        barCol,
+        this.marginVertical + r,
+        inThumb ? BLOCK : SHADE,
+        inThumb ? theme.accent : theme.dim,
+      );
+    }
+  }
+
   /** Submit the current line to the shell. */
   private submitLine(): void {
     const waiter = this.readLineWaiter;
@@ -395,6 +444,7 @@ export class TerminalSession implements Terminal {
     for (const row of wrapSegments(segments, this.textCols)) {
       this.pushRow(row);
     }
+    this.scrollOffset = 0;
     if (line.trim() !== "" && this.history[this.history.length - 1] !== line) {
       this.history.push(line);
     }
@@ -445,6 +495,12 @@ export class TerminalSession implements Terminal {
       case "End":
         this.cursor = this.buffer.length;
         break;
+      case "PageUp":
+        this.scrollByPage(1);
+        break;
+      case "PageDown":
+        this.scrollByPage(-1);
+        break;
       case "Delete":
         this.buffer =
           this.buffer.slice(0, this.cursor) +
@@ -483,6 +539,16 @@ export class TerminalSession implements Terminal {
         break;
     }
     this.redraw();
+  }
+
+  /** Scroll the view by `dir` pages: +1 up (older), -1 down (newer). */
+  private scrollByPage(dir: number): void {
+    const maxScroll = Math.max(0, this.lines.length - this.maxOutputRows);
+    const page = Math.max(1, this.maxOutputRows - 1);
+    this.scrollOffset = Math.min(
+      maxScroll,
+      Math.max(0, this.scrollOffset + dir * page),
+    );
   }
 
   private deleteWordBeforeCursor(): void {
