@@ -11,6 +11,22 @@ import { SnakeGame } from "./processes/Snake";
 import { BlocksGame } from "./processes/Blocks";
 import type { KeyEvent } from "./core/types";
 
+const iframe = document.getElementById("ui") as HTMLIFrameElement;
+
+window.addEventListener("message", (e) => {
+  if (e.data === "hide-ui") {
+    const canvas = document.getElementById("screen") as HTMLCanvasElement;
+    iframe.style.opacity = "0";
+    setTimeout(() => {
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.blur();
+      canvas.focus();
+      window.focus();
+    }, 300);
+  }
+});
+
 function sanitizeKey(event: KeyboardEvent): KeyEvent | null {
   const { key } = event;
   const ignored = new Set([
@@ -60,7 +76,13 @@ function boot(): void {
 
   // Future: wired to the Three.js camera animation / DOM overlay.
   kernel.onUiRequest = () => {
-    console.info("[kernel] ui transition requested (not yet implemented)");
+    const iframe = document.getElementById("ui") as HTMLIFrameElement;
+    console.log(iframe);
+    iframe.style.opacity = "1";
+    iframe.style.width = `100vw`;
+    iframe.style.height = `100vh`;
+    iframe.contentWindow?.focus();
+    iframe.src = "./ui/index.html";
   };
 
   terminal.writeLine("welcome to the CRT terminal");
