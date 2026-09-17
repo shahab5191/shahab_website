@@ -53,6 +53,8 @@ function sanitizeKey(event: KeyboardEvent): KeyEvent | null {
 }
 
 function boot(): void {
+  const htmlWebSite = document.getElementById("ui") as HTMLIFrameElement;
+  htmlWebSite.src = "./ui/index.html";
   const screen = document.getElementById("screen") as HTMLCanvasElement | null;
   if (!screen) throw new Error("missing #screen canvas");
 
