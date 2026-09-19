@@ -4,10 +4,11 @@ import "./style.css";
 
 const MAX_WAVE_LIFE = 3;
 const MAX_WAVES = 256;
-const LIGHT_RADIUS_SCALE = 0.08;
+const LIGHT_RADIUS_SCALE = 0.05;
 const MAX_LINES = 128;
 const NUM_H_LINES = 60;
 const NUM_V_LINES = 60;
+const WAVE_GROWTH = 250;
 
 function lightRadius(): number {
   return (
@@ -207,7 +208,7 @@ function draw(now: number): void {
   lastTime = now;
   for (let i = 0; i < waveList.length; i++) {
     const wave = waveList[i]!;
-    wave.r += dt * 100;
+    wave.r += dt * WAVE_GROWTH;
     wave.life -= dt;
     if (wave.life < 0) {
       waveList.splice(i, 1);
