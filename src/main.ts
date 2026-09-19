@@ -13,9 +13,17 @@ import type { KeyEvent } from "./core/types";
 
 const iframe = document.getElementById("ui") as HTMLIFrameElement;
 
+let uiVisible = false;
+let uiPauseTimer: number | null = null;
+
 window.addEventListener("message", (e) => {
   if (e.data === "hide-ui") {
     const canvas = document.getElementById("screen") as HTMLCanvasElement;
+    uiVisible = false;
+    if (uiPauseTimer !== null) {
+      clearTimeout(uiPauseTimer);
+      uiPauseTimer = null;
+    }
     iframe.style.opacity = "0";
     setTimeout(() => {
       iframe.style.width = "0";
@@ -53,8 +61,6 @@ function sanitizeKey(event: KeyboardEvent): KeyEvent | null {
 }
 
 function boot(): void {
-  const htmlWebSite = document.getElementById("ui") as HTMLIFrameElement;
-  htmlWebSite.src = "./ui.html";
   const screen = document.getElementById("screen") as HTMLCanvasElement | null;
   if (!screen) throw new Error("missing #screen canvas");
 
@@ -70,13 +76,10 @@ function boot(): void {
   const renderer: Renderer = new ThreeRenderer(screen);
   const kernel = new Kernel(graphics, terminal, shell, renderer);
 
-  // Process-spawning commands are registered at bootstrap, keeping the core
-  // command module free of process imports.
   registerCommand("demo", (ctx) => ctx.kernel.spawn(new BounceDemo()));
   registerCommand("snake", (ctx) => ctx.kernel.spawn(new SnakeGame()));
   registerCommand("blocks", (ctx) => ctx.kernel.spawn(new BlocksGame()));
 
-  // Future: wired to the Three.js camera animation / DOM overlay.
   kernel.onUiRequest = () => {
     const iframe = document.getElementById("ui") as HTMLIFrameElement;
     console.log(iframe);
@@ -84,7 +87,11 @@ function boot(): void {
     iframe.style.width = `100vw`;
     iframe.style.height = `100vh`;
     iframe.contentWindow?.focus();
-    iframe.src = "./ui.html";
+    if (uiPauseTimer !== null) clearTimeout(uiPauseTimer);
+    uiPauseTimer = window.setTimeout(() => {
+      uiVisible = true;
+      uiPauseTimer = null;
+    }, 300);
   };
 
   terminal.writeLine("welcome to the CRT terminal");
@@ -112,8 +119,10 @@ function boot(): void {
   const loop = (now: number): void => {
     const deltaTime = Math.min((now - last) / 1000, 0.1);
     last = now;
-    kernel.update(deltaTime);
-    renderer.render(graphics);
+    if (!uiVisible) {
+      kernel.update(deltaTime);
+      renderer.render(graphics);
+    }
     requestAnimationFrame(loop);
   };
   requestAnimationFrame(loop);

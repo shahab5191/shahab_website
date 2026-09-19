@@ -5,9 +5,9 @@ import "./style.css";
 const MAX_WAVE_LIFE = 3;
 const MAX_WAVES = 256;
 const LIGHT_RADIUS_SCALE = 0.05;
-const LINE_NUM = 100;
+const LINE_NUM = 30;
 const LINE_WIDTH = 1;
-const LINE_LENGTH = 200;
+const LINE_LENGTH = 600;
 const WAVE_GROWTH = 250;
 
 function lightRadius(): number {
