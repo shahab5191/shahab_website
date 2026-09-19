@@ -4,25 +4,38 @@ precision highp float;
 precision mediump float;
 #endif
 #define MAX_WAVES 256
-#define MAX_LINES 128
 uniform vec4 u_color;
 uniform vec4 u_waves[MAX_WAVES];
-uniform vec4 u_lines[MAX_LINES];
 uniform vec2 u_mouse;
 uniform float u_light_radius;
+uniform float u_line_cell;
+uniform float u_line_length;
+uniform float u_line_width;
+
+float hash21(vec2 p) {
+  p = fract(p * vec2(123.34, 345.45));
+  p += dot(p, p + 34.345);
+  return fract(p.x * p.y);
+}
 
 float lineMask(vec2 p) {
+  vec2 id = floor(p / u_line_cell);
   float mask = 0.0;
-  float w = 1.0;
-  for (int i = 0; i < MAX_LINES; i++) {
-    vec4 line = u_lines[i];
-    if (line.w < -0.5) continue;
-    float along = line.w < 0.5 ? p.x : p.y;
-    float perp = line.w < 0.5 ? p.y : p.x;
-    float dAlong = max(max(line.y - along, along - line.z), 0.0);
-    float dPerp = perp - line.x;
-    float d = length(vec2(dAlong, dPerp));
-    mask = max(mask, 1.0 - smoothstep(0.0, w, d));
+  for (int y = -1; y <= 1; y++) {
+    for (int x = -1; x <= 1; x++) {
+      vec2 cid = id + vec2(float(x), float(y));
+      vec2 center = (cid + vec2(hash21(cid), hash21(cid + 7.13))) * u_line_cell;
+      vec2 dir = hash21(cid + 5.3) < 0.5 ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+      float halfLen = u_line_length * (0.5 + 0.5 * hash21(cid + 3.71));
+
+      vec2 a = center - dir * halfLen;
+      vec2 b = center + dir * halfLen;
+      vec2 pa = p - a;
+      vec2 ba = b - a;
+      float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+      float d = length(pa - ba * h);
+      mask = max(mask, 1.0 - smoothstep(0.0, u_line_width, d));
+    }
   }
   return mask;
 }
