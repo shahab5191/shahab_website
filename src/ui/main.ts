@@ -5,9 +5,9 @@ import "./style.css";
 const MAX_WAVE_LIFE = 3;
 const MAX_WAVES = 256;
 const LIGHT_RADIUS_SCALE = 0.05;
-const LINE_CELL = 200;
-const LINE_LENGTH = 1000;
+const LINE_NUM = 100;
 const LINE_WIDTH = 1;
+const LINE_LENGTH = 200;
 const WAVE_GROWTH = 250;
 
 function lightRadius(): number {
@@ -36,9 +36,9 @@ let uWavesLoc: WebGLUniformLocation | null;
 let uMouseLoc: WebGLUniformLocation | null;
 let colorUniformLocation: WebGLUniformLocation | null;
 let uLightRadiusLoc: WebGLUniformLocation | null;
-let uLineCellLoc: WebGLUniformLocation | null;
-let uLineLengthLoc: WebGLUniformLocation | null;
-let uLineWidthLoc: WebGLUniformLocation | null;
+let uResolutionLoc: WebGLUniformLocation | null;
+
+let linesTexture: HTMLCanvasElement;
 
 function initCanvas(): void {
   const canvas = document.getElementById("background");
@@ -56,6 +56,32 @@ function initCanvas(): void {
   });
   if (!context) throw new Error("could not acquire WebGL context");
   gl = context;
+}
+
+function drawLinesTexture(): void {
+  linesTexture = document.createElement("canvas");
+  linesTexture.width = backgroundCanv.width;
+  linesTexture.height = backgroundCanv.height;
+  const ctx = linesTexture.getContext("2d");
+  if (!ctx) throw new Error("could not get 2d context");
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, backgroundCanv.width, backgroundCanv.height);
+  for (let i = 0; i < LINE_NUM; i++) {
+    const x = Math.random() * backgroundCanv.width;
+    const y = Math.random() * backgroundCanv.height;
+    const vertical = Math.random() < 0.5 ? true : false;
+    const length = (Math.random() * 0.5 + 0.5) * LINE_LENGTH;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    if (vertical) {
+      ctx.lineTo(x, y + length);
+    } else {
+      ctx.lineTo(x + length, y);
+    }
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = LINE_WIDTH;
+    ctx.stroke();
+  }
 }
 
 function compileShader(type: number, source: string): WebGLShader {
@@ -104,15 +130,9 @@ function initGl(): void {
   uLightRadiusLoc = gl.getUniformLocation(program, "u_light_radius");
   if (!uLightRadiusLoc)
     throw new Error("could not get uLightRadiusLoc uniform location");
-  uLineCellLoc = gl.getUniformLocation(program, "u_line_cell");
-  if (!uLineCellLoc)
-    throw new Error("could not get u_line_cell uniform location");
-  uLineLengthLoc = gl.getUniformLocation(program, "u_line_length");
-  if (!uLineLengthLoc)
-    throw new Error("could not get u_line_length uniform location");
-  uLineWidthLoc = gl.getUniformLocation(program, "u_line_width");
-  if (!uLineWidthLoc)
-    throw new Error("could not get u_line_width uniform location");
+  uResolutionLoc = gl.getUniformLocation(program, "u_resolution");
+  if (!uResolutionLoc)
+    throw new Error("could not get u_resolution uniform location");
 
   const buffer = gl.createBuffer();
   if (!buffer) throw new Error("could not create buffer");
@@ -123,6 +143,25 @@ function initGl(): void {
 
   gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(positionAttributeLocation);
+
+  const glLinesTexture = gl.createTexture();
+  if (!glLinesTexture) throw new Error("could not create texture");
+  gl.bindTexture(gl.TEXTURE_2D, glLinesTexture);
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.RGBA,
+    gl.RGBA,
+    gl.UNSIGNED_BYTE,
+    linesTexture,
+  );
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+  gl.useProgram(program);
+  gl.uniform1i(gl.getUniformLocation(program, "u_lines_texture"), 0);
 }
 
 function bindGeometry(): void {
@@ -189,7 +228,6 @@ function draw(now: number): void {
     }
   }
 
-  gl.useProgram(program);
   gl.viewport(0, 0, backgroundCanv.width, backgroundCanv.height);
   gl.clearColor(0, 0, 0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT);
@@ -212,14 +250,13 @@ function draw(now: number): void {
   gl.uniform2f(uMouseLoc, currentMousePos.x, currentMousePos.y);
 
   gl.uniform1f(uLightRadiusLoc, lightRadius());
-  gl.uniform1f(uLineCellLoc, LINE_CELL);
-  gl.uniform1f(uLineLengthLoc, LINE_LENGTH);
-  gl.uniform1f(uLineWidthLoc, LINE_WIDTH);
+  gl.uniform2f(uResolutionLoc, backgroundCanv.width, backgroundCanv.height);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 3);
 
   requestAnimationFrame(draw);
 }
 
 initCanvas();
+drawLinesTexture();
 initGl();
 requestAnimationFrame(draw);
