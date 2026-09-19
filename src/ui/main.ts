@@ -3,7 +3,8 @@ import fragmentShaderSource from "./shaders/fragment.glsl?raw";
 import "./style.css";
 
 const MAX_WAVE_LIFE = 3;
-const MAX_WAVES = 100;
+const MAX_WAVES = 256;
+const LIGHT_RADIUS = 200;
 
 interface Wave {
   x: number;
@@ -22,7 +23,9 @@ let program: WebGLProgram;
 let positionAttributeLocation: number;
 let positionBuffer: WebGLBuffer;
 let uWavesLoc: WebGLUniformLocation | null;
+let uMouseLoc: WebGLUniformLocation | null;
 let colorUniformLocation: WebGLUniformLocation | null;
+let uLightRadiusLoc: WebGLUniformLocation | null;
 
 function initCanvas(): void {
   const canvas = document.getElementById("background");
@@ -81,9 +84,13 @@ function initGl(): void {
   uWavesLoc = gl.getUniformLocation(program, "u_waves");
   if (!uWavesLoc) throw new Error("could not get u_waves uniform location");
   colorUniformLocation = gl.getUniformLocation(program, "u_color");
-  if (!colorUniformLocation) {
+  if (!colorUniformLocation)
     throw new Error("could not get u_color uniform location");
-  }
+  uMouseLoc = gl.getUniformLocation(program, "u_mouse");
+  if (!uMouseLoc) throw new Error("could not get u_mouse uniform location");
+  uLightRadiusLoc = gl.getUniformLocation(program, "u_light_radius");
+  if (!uLightRadiusLoc)
+    throw new Error("could not get uLightRadiusLoc uniform location");
 
   const buffer = gl.createBuffer();
   if (!buffer) throw new Error("could not create buffer");
@@ -102,11 +109,39 @@ function bindGeometry(): void {
   gl.enableVertexAttribArray(positionAttributeLocation);
 }
 
+const lastMousePos = {
+  x: 0,
+  y: 0,
+};
+
+const currentMousePos = {
+  x: 0,
+  y: 0,
+};
+
+const SPAWN_DISTANCE = 15;
+
 window.addEventListener("mousemove", (e) => {
+  const x = e.clientX;
+  const y = backgroundCanv.height - e.clientY;
+
+  currentMousePos.x = x;
+  currentMousePos.y = y;
+  if (
+    lastMousePos.x >= 0 &&
+    Math.hypot(x - lastMousePos.x, y - lastMousePos.y) < SPAWN_DISTANCE
+  ) {
+    return;
+  }
+  lastMousePos.x = x;
+  lastMousePos.y = y;
+  if (waveList.length >= MAX_WAVES) {
+    waveList.shift();
+  }
   waveList.push({
-    x: e.clientX,
-    y: backgroundCanv.height - e.clientY,
-    r: 10,
+    x,
+    y,
+    r: LIGHT_RADIUS / 1.5,
     life: MAX_WAVE_LIFE,
   });
 });
@@ -152,7 +187,9 @@ function draw(now: number): void {
     count++;
   }
   gl.uniform4fv(uWavesLoc, waveData);
+  gl.uniform2f(uMouseLoc, currentMousePos.x, currentMousePos.y);
 
+  gl.uniform1f(uLightRadiusLoc, LIGHT_RADIUS);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 3);
 
   requestAnimationFrame(draw);
