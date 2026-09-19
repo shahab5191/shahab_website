@@ -4,21 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CRT Terminal Portfolio</title>
-    <link rel="stylesheet" href="/ui/style.css" />
   </head>
   <body>
     <canvas id="background" class="background-canvas"></canvas>
     <h1 style="color: white">Hello World</h1>
     <button id="terminal-mode">Terminal</button>
     <p style="color: white">Test</p>
+    <script type="module" src="/src/ui/main.ts"></script>
+    <script>
+      const terminalModeButton = document.getElementById("terminal-mode");
+      terminalModeButton.addEventListener("click", () => {
+        window.parent.postMessage("hide-ui", "*");
+      });
+    </script>
   </body>
-  import script:
-  <script type="module" src="/ui/script.js"></script>
 </html>
-
-<script>
-  const terminalModeButton = document.getElementById("terminal-mode");
-  terminalModeButton.addEventListener("click", () => {
-    window.parent.postMessage("hide-ui", "*");
-  });
-</script>

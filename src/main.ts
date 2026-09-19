@@ -54,7 +54,7 @@ function sanitizeKey(event: KeyboardEvent): KeyEvent | null {
 
 function boot(): void {
   const htmlWebSite = document.getElementById("ui") as HTMLIFrameElement;
-  htmlWebSite.src = "./ui/index.html";
+  htmlWebSite.src = "./ui.html";
   const screen = document.getElementById("screen") as HTMLCanvasElement | null;
   if (!screen) throw new Error("missing #screen canvas");
 
@@ -84,7 +84,7 @@ function boot(): void {
     iframe.style.width = `100vw`;
     iframe.style.height = `100vh`;
     iframe.contentWindow?.focus();
-    iframe.src = "./ui/index.html";
+    iframe.src = "./ui.html";
   };
 
   terminal.writeLine("welcome to the CRT terminal");
