@@ -4,7 +4,16 @@ import "./style.css";
 
 const MAX_WAVE_LIFE = 3;
 const MAX_WAVES = 256;
-const LIGHT_RADIUS = 200;
+const LIGHT_RADIUS_SCALE = 0.08;
+const MAX_LINES = 128;
+const NUM_H_LINES = 60;
+const NUM_V_LINES = 60;
+
+function lightRadius(): number {
+  return (
+    Math.hypot(backgroundCanv.width, backgroundCanv.height) * LIGHT_RADIUS_SCALE
+  );
+}
 
 interface Wave {
   x: number;
@@ -23,9 +32,45 @@ let program: WebGLProgram;
 let positionAttributeLocation: number;
 let positionBuffer: WebGLBuffer;
 let uWavesLoc: WebGLUniformLocation | null;
+let uLinesLoc: WebGLUniformLocation | null;
 let uMouseLoc: WebGLUniformLocation | null;
 let colorUniformLocation: WebGLUniformLocation | null;
 let uLightRadiusLoc: WebGLUniformLocation | null;
+
+const LINE_LENGTH_MIN_FRACTION = 0.25;
+const LINE_LENGTH_MAX_FRACTION = 0.75;
+
+const lineData = new Float32Array(MAX_LINES * 4);
+
+function randomSegment(extent: number): [number, number] {
+  const fraction =
+    LINE_LENGTH_MIN_FRACTION +
+    Math.random() * (LINE_LENGTH_MAX_FRACTION - LINE_LENGTH_MIN_FRACTION);
+  const length = extent * fraction;
+  const start = Math.random() * (extent - length);
+  return [start, start + length];
+}
+
+function generateLines(): void {
+  for (let i = 0; i < MAX_LINES; i++) {
+    lineData[i * 4 + 3] = -1;
+  }
+  let idx = 0;
+  for (let i = 0; i < NUM_H_LINES && idx < MAX_LINES; i++, idx++) {
+    const [xStart, xEnd] = randomSegment(backgroundCanv.width);
+    lineData[idx * 4] = Math.random() * backgroundCanv.height;
+    lineData[idx * 4 + 1] = xStart;
+    lineData[idx * 4 + 2] = xEnd;
+    lineData[idx * 4 + 3] = 0;
+  }
+  for (let i = 0; i < NUM_V_LINES && idx < MAX_LINES; i++, idx++) {
+    const [yStart, yEnd] = randomSegment(backgroundCanv.height);
+    lineData[idx * 4] = Math.random() * backgroundCanv.width;
+    lineData[idx * 4 + 1] = yStart;
+    lineData[idx * 4 + 2] = yEnd;
+    lineData[idx * 4 + 3] = 1;
+  }
+}
 
 function initCanvas(): void {
   const canvas = document.getElementById("background");
@@ -86,6 +131,8 @@ function initGl(): void {
   colorUniformLocation = gl.getUniformLocation(program, "u_color");
   if (!colorUniformLocation)
     throw new Error("could not get u_color uniform location");
+  uLinesLoc = gl.getUniformLocation(program, "u_lines");
+  if (!uLinesLoc) throw new Error("could not get u_lines uniform location");
   uMouseLoc = gl.getUniformLocation(program, "u_mouse");
   if (!uMouseLoc) throw new Error("could not get u_mouse uniform location");
   uLightRadiusLoc = gl.getUniformLocation(program, "u_light_radius");
@@ -119,7 +166,7 @@ const currentMousePos = {
   y: 0,
 };
 
-const SPAWN_DISTANCE = 15;
+const SPAWN_DISTANCE = 40;
 
 window.addEventListener("mousemove", (e) => {
   const x = e.clientX;
@@ -141,7 +188,7 @@ window.addEventListener("mousemove", (e) => {
   waveList.push({
     x,
     y,
-    r: LIGHT_RADIUS / 1.5,
+    r: lightRadius() / 2,
     life: MAX_WAVE_LIFE,
   });
 });
@@ -150,6 +197,7 @@ function resizeCanvas(): void {
   backgroundCanv.width = backgroundCanv.clientWidth;
   backgroundCanv.height = backgroundCanv.clientHeight;
   gl.viewport(0, 0, backgroundCanv.width, backgroundCanv.height);
+  generateLines();
 }
 
 window.addEventListener("resize", resizeCanvas);
@@ -174,7 +222,7 @@ function draw(now: number): void {
 
   bindGeometry();
 
-  gl.uniform4fv(colorUniformLocation, [1, 0, 0, 1]);
+  gl.uniform4fv(colorUniformLocation, [1, 0.48, 0, 1]);
   let count = 0;
   const waveData = new Float32Array(MAX_WAVES * 4);
   for (const wave of waveList) {
@@ -187,14 +235,16 @@ function draw(now: number): void {
     count++;
   }
   gl.uniform4fv(uWavesLoc, waveData);
+  gl.uniform4fv(uLinesLoc, lineData);
   gl.uniform2f(uMouseLoc, currentMousePos.x, currentMousePos.y);
 
-  gl.uniform1f(uLightRadiusLoc, LIGHT_RADIUS);
+  gl.uniform1f(uLightRadiusLoc, lightRadius());
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 3);
 
   requestAnimationFrame(draw);
 }
 
 initCanvas();
+generateLines();
 initGl();
 requestAnimationFrame(draw);
