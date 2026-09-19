@@ -106,7 +106,7 @@ window.addEventListener("mousemove", (e) => {
   waveList.push({
     x: e.clientX,
     y: backgroundCanv.height - e.clientY,
-    r: 300,
+    r: 10,
     life: MAX_WAVE_LIFE,
   });
 });
