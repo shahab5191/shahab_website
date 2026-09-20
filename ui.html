@@ -7,28 +7,87 @@
   </head>
   <body>
     <canvas id="background" class="background-canvas"></canvas>
+    <div class="content-backdrop" aria-hidden="true"></div>
     <header class="header">
       <div class="header-name-container">
         <p class="header-name">shahab.cv</p>
         <p class="header-splitter"></p>
         <p class="header-role">
-          <button id="terminal-mode">terminal mode</button>
+          <button id="terminal-mode">Terminal Mode</button>
         </p>
       </div>
       <div class="header-contact-container">
         <a href="mailto:oveysi.shahab@gmail.com" class="header-contact">oveysi.shahab@gmail.com</a>
-        <button id="contact-button">Contact</button>
+        <button id="contact-button" data-section="contact">Contact</button>
       </div>
     </header>
-    <div class="content">
-      <ui class="menu">
-        <li class="item"><span>01</span>About me</li>
-        <li class="item"><span>02</span>Experience</li>
-        <li class="item"><span>04</span>Skills</li>
-        <li class="item"><span>05</span>Projects</li>
-        <li class="item"><span>03</span>Education & Training</li>
-      </ui>
+    <div class="content" id="content">
+      <div class="menu-wrapper">
+        <ul class="menu">
+          <li class="item" data-section="about" data-number="01" data-short="ABOUT">
+            <span class="item-number">01</span><span class="item-label">About me</span>
+          </li>
+          <li class="item" data-section="experience" data-number="02" data-short="EXP">
+            <span class="item-number">02</span><span class="item-label">Experience</span>
+          </li>
+          <li class="item" data-section="skills" data-number="04" data-short="SKILLS">
+            <span class="item-number">04</span><span class="item-label">Skills</span>
+          </li>
+          <li class="item" data-section="projects" data-number="05" data-short="PROJECTS">
+            <span class="item-number">05</span><span class="item-label">Projects</span>
+          </li>
+          <li class="item" data-section="education" data-number="03" data-short="EDU">
+            <span class="item-number">03</span><span class="item-label">Education & Training</span>
+          </li>
+        </ul>
+        <button
+          id="menu-collapse-bar"
+          class="menu-collapse-bar"
+          type="button"
+          aria-label="Expand menu and close content"
+        ></button>
+      </div>
+      <div id="content-view" class="content-view" aria-hidden="true">
+        <div id="content-view-inner" class="content-view-inner"></div>
+      </div>
     </div>
+
+    <template data-content="about">
+      <section class="section" data-section-content="about">
+        <!-- about me content -->
+        <h2 class="section-title">About me</h2>
+      </section>
+    </template>
+    <template data-content="experience">
+      <section class="section" data-section-content="experience">
+        <!-- experience content -->
+        <h2 class="section-title">Experience</h2>
+      </section>
+    </template>
+    <template data-content="skills">
+      <section class="section" data-section-content="skills">
+        <!-- skills content -->
+        <h2 class="section-title">Skills</h2>
+      </section>
+    </template>
+    <template data-content="projects">
+      <section class="section" data-section-content="projects">
+        <!-- projects content -->
+        <h2 class="section-title">Projects</h2>
+      </section>
+    </template>
+    <template data-content="education">
+      <section class="section" data-section-content="education">
+        <!-- education & training content -->
+        <h2 class="section-title">Education & Training</h2>
+      </section>
+    </template>
+    <template data-content="contact">
+      <section class="section" data-section-content="contact">
+        <!-- contact content -->
+        <h2 class="section-title">Contact</h2>
+      </section>
+    </template>
     <footer class="footer">
       <div class="footer-info-container">
         <div class="footer-info-name-container">
@@ -47,6 +106,7 @@
         <a href="https://www.linkedin.com/in/shahab-oveysi/" target="_blank" class="footer-link">LI</a>
         <a href="./shahabedin-oveysi-cv.pdf" target="_blank" class="footer-link">CV</a>
       </div>
+    </footer>
     <script type="module" src="/src/ui/main.ts"></script>
     <script>
       const terminalModeButton = document.getElementById("terminal-mode");

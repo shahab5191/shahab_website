@@ -1,17 +1,17 @@
 import vertexShaderSource from "./shaders/vertex.glsl?raw";
 import fragmentShaderSource from "./shaders/fragment.glsl?raw";
 import "./style.css";
+import "./content";
 
 const MAX_WAVE_LIFE = 3;
 const MAX_WAVES = 256;
 const LIGHT_RADIUS_SCALE = 0.05;
 const LINE_WIDTH = 1;
-const LINE_LENGTH = 600;
 const WAVE_GROWTH = 250;
 
 const BACKGROUND_LINE_COUNT = 48;
-const BACKGROUND_LINE_COLOR = "#333";
-const LOGO_LINE_COLOR = "#888";
+const BACKGROUND_LINE_COLOR = "#777";
+const LOGO_LINE_COLOR = "#ccc";
 const LOGO_MARGIN = 0.12;
 const LOGO_BASE_GAP = 8;
 const LOGO_MIN_GAP = 2;
@@ -20,6 +20,10 @@ function lightRadius(): number {
   return (
     Math.hypot(backgroundCanv.width, backgroundCanv.height) * LIGHT_RADIUS_SCALE
   );
+}
+
+function lightLenght() {
+  return Math.hypot(backgroundCanv.width, backgroundCanv.height);
 }
 
 interface Wave {
@@ -76,7 +80,7 @@ function drawBackgroundLines(ctx: CanvasRenderingContext2D): void {
     const x = Math.random() * backgroundCanv.width;
     const y = Math.random() * backgroundCanv.height;
     const vertical = Math.random() < 0.5;
-    const length = (Math.random() * 0.5 + 0.5) * LINE_LENGTH;
+    const length = (Math.random() * 0.5 + 0.5) * lightLenght();
     ctx.beginPath();
     ctx.moveTo(x, y);
     if (vertical) {
