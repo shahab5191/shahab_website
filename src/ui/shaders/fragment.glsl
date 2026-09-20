@@ -7,6 +7,7 @@ uniform float u_light_radius;
 uniform vec2 u_resolution;
 uniform int u_wave_count;
 uniform sampler2D u_lines_texture;
+uniform float u_ambient;
 
 void main() {
   vec3 color = vec3(0.0);
@@ -22,7 +23,7 @@ void main() {
   float t = length(gl_FragCoord.xy - u_mouse.xy) / u_light_radius;
   float glow = exp(-pow(t, 4.0) * 3.0);
   color += u_color.rgb * 1.5 * glow;
-  color += u_color.rgb * 0.15;
+  color += u_color.rgb * u_ambient;
   color *= texture2D(u_lines_texture, gl_FragCoord.xy / u_resolution).r;
   gl_FragColor = vec4(color, 1.0);
 }

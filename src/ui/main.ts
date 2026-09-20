@@ -16,6 +16,10 @@ const LOGO_MARGIN = 0.12;
 const LOGO_BASE_GAP = 8;
 const LOGO_MIN_GAP = 2;
 
+const AMBIENT_BASE = 0.15;
+const AMBIENT_ACTIVE = 0.35;
+const AMBIENT_LERP_SPEED = 6;
+
 function lightRadius(): number {
   return (
     Math.hypot(backgroundCanv.width, backgroundCanv.height) * LIGHT_RADIUS_SCALE
@@ -36,6 +40,7 @@ interface Wave {
 const waveList: Wave[] = [];
 
 let lastTime = performance.now();
+let ambient = AMBIENT_BASE;
 
 let backgroundCanv: HTMLCanvasElement;
 let gl: WebGLRenderingContext;
@@ -48,6 +53,7 @@ let colorUniformLocation: WebGLUniformLocation | null;
 let uLightRadiusLoc: WebGLUniformLocation | null;
 let uResolutionLoc: WebGLUniformLocation | null;
 let uWaveCountLoc: WebGLUniformLocation | null;
+let uAmbientLoc: WebGLUniformLocation | null;
 let linesTexture: HTMLCanvasElement;
 let waveData: Float32Array;
 let glLinesTexture: WebGLTexture | null = null;
@@ -262,6 +268,8 @@ function initGl(): void {
   uWaveCountLoc = gl.getUniformLocation(program, "u_wave_count");
   if (!uWaveCountLoc)
     throw new Error("could not get u_wave_count uniform location");
+  uAmbientLoc = gl.getUniformLocation(program, "u_ambient");
+  if (!uAmbientLoc) throw new Error("could not get u_ambient uniform location");
 
   const buffer = gl.createBuffer();
   if (!buffer) throw new Error("could not create buffer");
@@ -352,6 +360,12 @@ window.addEventListener("resize", () => {
 function draw(now: number): void {
   const dt = (now - lastTime) / 1000;
   lastTime = now;
+
+  const ambientTarget = document.body.classList.contains("is-content-open")
+    ? AMBIENT_ACTIVE
+    : AMBIENT_BASE;
+  ambient += (ambientTarget - ambient) * Math.min(1, dt * AMBIENT_LERP_SPEED);
+
   for (let i = 0; i < waveList.length; i++) {
     const wave = waveList[i]!;
     wave.r += dt * WAVE_GROWTH;
@@ -386,6 +400,7 @@ function draw(now: number): void {
   gl.uniform1f(uLightRadiusLoc, lightRadius());
   gl.uniform2f(uResolutionLoc, backgroundCanv.width, backgroundCanv.height);
   gl.uniform1i(uWaveCountLoc, waveList.length);
+  gl.uniform1f(uAmbientLoc, ambient);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 3);
 
   requestAnimationFrame(draw);
