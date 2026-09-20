@@ -5,10 +5,16 @@ import "./style.css";
 const MAX_WAVE_LIFE = 3;
 const MAX_WAVES = 256;
 const LIGHT_RADIUS_SCALE = 0.05;
-const LINE_NUM = 30;
 const LINE_WIDTH = 1;
 const LINE_LENGTH = 600;
 const WAVE_GROWTH = 250;
+
+const BACKGROUND_LINE_COUNT = 48;
+const BACKGROUND_LINE_COLOR = "#333";
+const LOGO_LINE_COLOR = "#888";
+const LOGO_MARGIN = 0.12;
+const LOGO_BASE_GAP = 8;
+const LOGO_MIN_GAP = 2;
 
 function lightRadius(): number {
   return (
@@ -40,6 +46,10 @@ let uResolutionLoc: WebGLUniformLocation | null;
 let uWaveCountLoc: WebGLUniformLocation | null;
 let linesTexture: HTMLCanvasElement;
 let waveData: Float32Array;
+let glLinesTexture: WebGLTexture | null = null;
+let logoGray: Float32Array | null = null;
+let logoWidth = 0;
+let logoHeight = 0;
 
 function initCanvas(): void {
   const canvas = document.getElementById("background");
@@ -59,18 +69,13 @@ function initCanvas(): void {
   gl = context;
 }
 
-function drawLinesTexture(): void {
-  linesTexture = document.createElement("canvas");
-  linesTexture.width = backgroundCanv.width;
-  linesTexture.height = backgroundCanv.height;
-  const ctx = linesTexture.getContext("2d");
-  if (!ctx) throw new Error("could not get 2d context");
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0, 0, backgroundCanv.width, backgroundCanv.height);
-  for (let i = 0; i < LINE_NUM; i++) {
+function drawBackgroundLines(ctx: CanvasRenderingContext2D): void {
+  ctx.strokeStyle = BACKGROUND_LINE_COLOR;
+  ctx.lineWidth = LINE_WIDTH;
+  for (let i = 0; i < BACKGROUND_LINE_COUNT; i++) {
     const x = Math.random() * backgroundCanv.width;
     const y = Math.random() * backgroundCanv.height;
-    const vertical = Math.random() < 0.5 ? true : false;
+    const vertical = Math.random() < 0.5;
     const length = (Math.random() * 0.5 + 0.5) * LINE_LENGTH;
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -79,10 +84,126 @@ function drawLinesTexture(): void {
     } else {
       ctx.lineTo(x + length, y);
     }
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = LINE_WIDTH;
     ctx.stroke();
   }
+}
+
+function drawLinesTexture(): void {
+  linesTexture = document.createElement("canvas");
+  linesTexture.width = backgroundCanv.width;
+  linesTexture.height = backgroundCanv.height;
+  const ctx = linesTexture.getContext("2d");
+  if (!ctx) throw new Error("could not get 2d context");
+
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, backgroundCanv.width, backgroundCanv.height);
+
+  drawBackgroundLines(ctx);
+
+  const gray = logoGray;
+  if (!gray) return;
+
+  const width = linesTexture.width;
+  const height = linesTexture.height;
+  const scale =
+    Math.min(width / logoWidth, height / logoHeight) * (1 - LOGO_MARGIN);
+  const drawWidth = logoWidth * scale;
+  const drawHeight = logoHeight * scale;
+  const offsetX = (width - drawWidth) / 2;
+  const offsetY = (height - drawHeight) / 2;
+
+  const sample = (x: number, y: number): number => {
+    const fx = (x - offsetX) / scale;
+    const fy = (y - offsetY) / scale;
+    if (fx < 0 || fy < 0 || fx > logoWidth - 1 || fy > logoHeight - 1) {
+      return 0;
+    }
+    const x0 = Math.floor(fx);
+    const y0 = Math.floor(fy);
+    const x1 = Math.min(x0 + 1, logoWidth - 1);
+    const y1 = Math.min(y0 + 1, logoHeight - 1);
+    const tx = fx - x0;
+    const ty = fy - y0;
+    const topLeft = gray[y0 * logoWidth + x0] ?? 0;
+    const topRight = gray[y0 * logoWidth + x1] ?? 0;
+    const bottomLeft = gray[y1 * logoWidth + x0] ?? 0;
+    const bottomRight = gray[y1 * logoWidth + x1] ?? 0;
+    const top = topLeft + (topRight - topLeft) * tx;
+    const bottom = bottomLeft + (bottomRight - bottomLeft) * tx;
+    return top + (bottom - top) * ty;
+  };
+
+  ctx.strokeStyle = LOGO_LINE_COLOR;
+  ctx.lineWidth = LINE_WIDTH;
+
+  let y = offsetY;
+  while (y < offsetY + drawHeight) {
+    let brightnessSum = 0;
+    let brightnessCount = 0;
+    for (let x = offsetX; x < offsetX + drawWidth; x += 8) {
+      brightnessSum += sample(x, y);
+      brightnessCount++;
+    }
+    const brightness =
+      brightnessCount > 0 ? brightnessSum / brightnessCount : 0;
+
+    let inRun = false;
+    let runStart = 0;
+    for (let x = offsetX; x <= offsetX + drawWidth; x++) {
+      const white = sample(x, y) > 0.5;
+      if (white && !inRun) {
+        inRun = true;
+        runStart = x;
+      } else if (!white && inRun) {
+        inRun = false;
+        ctx.beginPath();
+        ctx.moveTo(runStart, y);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      }
+    }
+
+    y += LOGO_BASE_GAP + (LOGO_MIN_GAP - LOGO_BASE_GAP) * brightness;
+  }
+}
+
+function loadLogo(): void {
+  const image = new Image();
+  image.onload = () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(image, 0, 0);
+    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    logoWidth = canvas.width;
+    logoHeight = canvas.height;
+    const gray = new Float32Array(logoWidth * logoHeight);
+    for (let i = 0; i < logoWidth * logoHeight; i++) {
+      const r = pixels.data[i * 4] ?? 0;
+      const g = pixels.data[i * 4 + 1] ?? 0;
+      const b = pixels.data[i * 4 + 2] ?? 0;
+      gray[i] = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    }
+    logoGray = gray;
+    drawLinesTexture();
+    uploadLinesTexture();
+  };
+  image.src = "./logo.png";
+}
+
+function uploadLinesTexture(): void {
+  if (!glLinesTexture) return;
+  gl.bindTexture(gl.TEXTURE_2D, glLinesTexture);
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.RGBA,
+    gl.RGBA,
+    gl.UNSIGNED_BYTE,
+    linesTexture,
+  );
 }
 
 function compileShader(type: number, source: string): WebGLShader {
@@ -148,8 +269,9 @@ function initGl(): void {
   gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(positionAttributeLocation);
 
-  const glLinesTexture = gl.createTexture();
-  if (!glLinesTexture) throw new Error("could not create texture");
+  const glLinesTextureLocal = gl.createTexture();
+  if (!glLinesTextureLocal) throw new Error("could not create texture");
+  glLinesTexture = glLinesTextureLocal;
   gl.bindTexture(gl.TEXTURE_2D, glLinesTexture);
   gl.texImage2D(
     gl.TEXTURE_2D,
@@ -217,7 +339,11 @@ function resizeCanvas(): void {
   gl.viewport(0, 0, backgroundCanv.width, backgroundCanv.height);
 }
 
-window.addEventListener("resize", resizeCanvas);
+window.addEventListener("resize", () => {
+  resizeCanvas();
+  drawLinesTexture();
+  uploadLinesTexture();
+});
 
 function draw(now: number): void {
   const dt = (now - lastTime) / 1000;
@@ -264,4 +390,5 @@ function draw(now: number): void {
 initCanvas();
 drawLinesTexture();
 initGl();
+loadLogo();
 requestAnimationFrame(draw);

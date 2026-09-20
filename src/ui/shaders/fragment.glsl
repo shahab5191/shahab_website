@@ -22,6 +22,7 @@ void main() {
   float t = length(gl_FragCoord.xy - u_mouse.xy) / u_light_radius;
   float glow = exp(-pow(t, 4.0) * 3.0);
   color += u_color.rgb * 1.5 * glow;
+  color += u_color.rgb * 0.15;
   color *= texture2D(u_lines_texture, gl_FragCoord.xy / u_resolution).r;
   gl_FragColor = vec4(color, 1.0);
 }
