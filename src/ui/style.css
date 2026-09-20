@@ -11,6 +11,8 @@ body {
   color: #fff;
   overflow: hidden;
   font-family: monospace;
+  display: flex;
+  flex-direction: column;
 }
 
 .background-canvas {
@@ -101,7 +103,7 @@ body {
 }
 
 button {
-  background-color: transparent;
+  background-color: black;
   border: none;
   border-radius: 0.2rem;
   border: 1px solid #fff;
@@ -121,9 +123,64 @@ button:hover {
 }
 
 .header-contact-container {
-	position: relative;
-	display: flex;
-	align-items: center;
-	justify-content: right;
-	gap: 1rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: right;
+  gap: 1rem;
+}
+
+.header-contact {
+  color: #fff;
+  text-decoration: none;
+  transition: color 0.3s ease-in-out;
+  background-color: black;
+  padding: 0 1rem;
+}
+
+.header-contact:hover {
+  color: #ff7a00;
+}
+
+.content {
+  height: 100%;
+  width: 100%;
+}
+
+.footer {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  padding: 2rem;
+}
+
+.footer-info-container {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.footer-current-position-container,
+.footer-info-name-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer-text {
+  font-size: 0.8rem;
+  font-weight: 300;
+  margin: 0;
+}
+
+.footer-info-name-container .footer-text {
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.footer-current-position-container .footer-text {
+  color: #aaa;
 }

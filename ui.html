@@ -3,22 +3,41 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CRT Terminal Portfolio</title>
+    <title>Shahab Oveysi</title>
   </head>
   <body>
     <canvas id="background" class="background-canvas"></canvas>
     <header class="header">
       <div class="header-name-container">
-        <p class="header-name">Shahab Oveysi</p>
+        <p class="header-name">shahab.cv</p>
         <p class="header-splitter"></p>
         <p class="header-role">Senior Software Eng & Tech Lead</p>
       </div>
       <div class="header-contact-container">
-        <p class="header-contact">oveysi.shahab@gmail.com</p>
+        <a href="mailto:oveysi.shahab@gmail.com" class="header-contact"
+          >oveysi.shahab@gmail.com</a
+        >
         <button id="contact-button">Contact</button>
       </div>
     </header>
-    <button id="terminal-mode" hidden>terminal mode</button>
+    <div class="content">
+      <button id="terminal-mode" hidden>terminal mode</button>
+    </div>
+    <footer class="footer">
+      <div class="footer-info-container">
+        <div class="footer-info-name-container">
+          <p class="footer-text">Shahab Oveysi</p>
+          <p class="footer-text">-</p>
+          <p class="footer-text">Senior Software Engineer & Tech Lead</p>
+        </div>
+        <div class="footer-current-position-container">
+          <p class="footer-text">Oslo, Norway</p>
+          <p class="footer-text">/</p>
+          <p class="footer-text">Seniro Backend Engineer</p>
+        </div>
+      </div>
+      <div class="footer-links-container">
+      </div>
     <script type="module" src="/src/ui/main.ts"></script>
     <script>
       const terminalModeButton = document.getElementById("terminal-mode");
