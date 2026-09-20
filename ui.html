@@ -7,9 +7,18 @@
   </head>
   <body>
     <canvas id="background" class="background-canvas"></canvas>
-    <h1 style="color: white">Hello World</h1>
-    <button id="terminal-mode">Terminal</button>
-    <p style="color: white">Test</p>
+    <header class="header">
+      <div class="header-name-container">
+        <p class="header-name">Shahab Oveysi</p>
+        <p class="header-splitter"></p>
+        <p class="header-role">Senior Software Eng & Tech Lead</p>
+      </div>
+      <div class="header-contact-container">
+        <p class="header-contact">oveysi.shahab@gmail.com</p>
+        <button id="contact-button">Contact</button>
+      </div>
+    </header>
+    <button id="terminal-mode" hidden>terminal mode</button>
     <script type="module" src="/src/ui/main.ts"></script>
     <script>
       const terminalModeButton = document.getElementById("terminal-mode");

@@ -14,16 +14,11 @@ import type { KeyEvent } from "./core/types";
 const iframe = document.getElementById("ui") as HTMLIFrameElement;
 
 let uiVisible = false;
-let uiPauseTimer: number | null = null;
 
 window.addEventListener("message", (e) => {
   if (e.data === "hide-ui") {
     const canvas = document.getElementById("screen") as HTMLCanvasElement;
     uiVisible = false;
-    if (uiPauseTimer !== null) {
-      clearTimeout(uiPauseTimer);
-      uiPauseTimer = null;
-    }
     iframe.style.opacity = "0";
     setTimeout(() => {
       iframe.style.width = "0";
@@ -87,11 +82,7 @@ function boot(): void {
     iframe.style.width = `100vw`;
     iframe.style.height = `100vh`;
     iframe.contentWindow?.focus();
-    if (uiPauseTimer !== null) clearTimeout(uiPauseTimer);
-    uiPauseTimer = window.setTimeout(() => {
-      uiVisible = true;
-      uiPauseTimer = null;
-    }, 300);
+    uiVisible = true;
   };
 
   terminal.writeLine("welcome to the CRT terminal");

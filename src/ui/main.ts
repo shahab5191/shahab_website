@@ -37,8 +37,9 @@ let uMouseLoc: WebGLUniformLocation | null;
 let colorUniformLocation: WebGLUniformLocation | null;
 let uLightRadiusLoc: WebGLUniformLocation | null;
 let uResolutionLoc: WebGLUniformLocation | null;
-
+let uWaveCountLoc: WebGLUniformLocation | null;
 let linesTexture: HTMLCanvasElement;
+let waveData: Float32Array;
 
 function initCanvas(): void {
   const canvas = document.getElementById("background");
@@ -133,6 +134,9 @@ function initGl(): void {
   uResolutionLoc = gl.getUniformLocation(program, "u_resolution");
   if (!uResolutionLoc)
     throw new Error("could not get u_resolution uniform location");
+  uWaveCountLoc = gl.getUniformLocation(program, "u_wave_count");
+  if (!uWaveCountLoc)
+    throw new Error("could not get u_wave_count uniform location");
 
   const buffer = gl.createBuffer();
   if (!buffer) throw new Error("could not create buffer");
@@ -236,7 +240,7 @@ function draw(now: number): void {
 
   gl.uniform4fv(colorUniformLocation, [1, 0.48, 0, 1]);
   let count = 0;
-  const waveData = new Float32Array(MAX_WAVES * 4);
+  waveData = new Float32Array(MAX_WAVES * 4);
   for (const wave of waveList) {
     if (count >= MAX_WAVES) break;
     const i = count * 4;
@@ -251,6 +255,7 @@ function draw(now: number): void {
 
   gl.uniform1f(uLightRadiusLoc, lightRadius());
   gl.uniform2f(uResolutionLoc, backgroundCanv.width, backgroundCanv.height);
+  gl.uniform1i(uWaveCountLoc, waveList.length);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 3);
 
   requestAnimationFrame(draw);

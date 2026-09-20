@@ -5,11 +5,13 @@ uniform vec4 u_waves[MAX_WAVES];
 uniform vec2 u_mouse;
 uniform float u_light_radius;
 uniform vec2 u_resolution;
+uniform int u_wave_count;
 uniform sampler2D u_lines_texture;
 
 void main() {
   vec3 color = vec3(0.0);
   for (int i = 0; i < MAX_WAVES; i++) {
+    if (i >= u_wave_count) break;
     vec4 w = u_waves[i];
     if (w.w <= 0.0) continue;
     float d = length(gl_FragCoord.xy - w.xy);
