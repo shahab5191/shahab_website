@@ -30,7 +30,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 3rem;
 }
 
 .header-name-container {
@@ -151,7 +151,8 @@ button:hover {
   position: relative;
   display: flex;
   flex-direction: row;
-  padding: 2rem;
+  padding: 3rem;
+  justify-content: space-between;
 }
 
 .footer-info-container {
@@ -168,6 +169,7 @@ button:hover {
   flex-direction: row;
   align-items: center;
   justify-content: center;
+  gap: 0.5rem;
 }
 
 .footer-text {
@@ -183,4 +185,29 @@ button:hover {
 
 .footer-current-position-container .footer-text {
   color: #aaa;
+}
+
+.footer-links-container {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  align-items: center;
+}
+
+.footer-link {
+  color: #aaa;
+  text-decoration: none;
+  transition: color 0.3s ease-in-out;
+}
+
+.footer-link:hover {
+  color: #ff7a00;
+}
+
+#terminal-mode {
+  width: auto;
+	border: none !important;
+	margin: 0;
+	padding: 0;
+	background-color: transparent;
 }
