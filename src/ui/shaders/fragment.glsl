@@ -1,6 +1,7 @@
 precision mediump float;
 #define MAX_WAVES 256
 uniform vec4 u_color;
+uniform vec4 u_color_secondary;
 uniform vec4 u_waves[MAX_WAVES];
 uniform vec2 u_mouse;
 uniform float u_light_radius;
@@ -18,7 +19,8 @@ void main() {
     float d = length(gl_FragCoord.xy - w.xy);
     float x = d - w.z;
     float amp = exp(-x * x * 0.004);
-    color += u_color.rgb * amp * w.w;
+    vec3 waveColor = mix(u_color.rgb, u_color_secondary.rgb, 1.0 - w.w);
+    color += waveColor * amp * w.w;
   }
   float t = length(gl_FragCoord.xy - u_mouse.xy) / u_light_radius;
   float glow = exp(-pow(t, 4.0) * 3.0);

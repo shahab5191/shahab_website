@@ -16,6 +16,9 @@ const LOGO_MARGIN = 0.12;
 const LOGO_BASE_GAP = 8;
 const LOGO_MIN_GAP = 2;
 
+const LIGHT_COLOR = "#ff7a00";
+const LIGHT_COLOR_SECONDARY = "#ff00aa";
+
 const AMBIENT_BASE = 0.15;
 const AMBIENT_ACTIVE = 0.35;
 const AMBIENT_LERP_SPEED = 6;
@@ -28,6 +31,15 @@ function lightRadius(): number {
 
 function lightLenght() {
   return Math.hypot(backgroundCanv.width, backgroundCanv.height);
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const value = parseInt(hex.slice(1), 16);
+  return [
+    ((value >> 16) & 0xff) / 255,
+    ((value >> 8) & 0xff) / 255,
+    (value & 0xff) / 255,
+  ];
 }
 
 interface Wave {
@@ -50,6 +62,7 @@ let positionBuffer: WebGLBuffer;
 let uWavesLoc: WebGLUniformLocation | null;
 let uMouseLoc: WebGLUniformLocation | null;
 let colorUniformLocation: WebGLUniformLocation | null;
+let secondaryColorUniformLocation: WebGLUniformLocation | null;
 let uLightRadiusLoc: WebGLUniformLocation | null;
 let uResolutionLoc: WebGLUniformLocation | null;
 let uWaveCountLoc: WebGLUniformLocation | null;
@@ -257,6 +270,12 @@ function initGl(): void {
   colorUniformLocation = gl.getUniformLocation(program, "u_color");
   if (!colorUniformLocation)
     throw new Error("could not get u_color uniform location");
+  secondaryColorUniformLocation = gl.getUniformLocation(
+    program,
+    "u_color_secondary",
+  );
+  if (!secondaryColorUniformLocation)
+    throw new Error("could not get u_color_secondary uniform location");
   uMouseLoc = gl.getUniformLocation(program, "u_mouse");
   if (!uMouseLoc) throw new Error("could not get u_mouse uniform location");
   uLightRadiusLoc = gl.getUniformLocation(program, "u_light_radius");
@@ -382,7 +401,10 @@ function draw(now: number): void {
 
   bindGeometry();
 
-  gl.uniform4fv(colorUniformLocation, [1, 0.48, 0, 1]);
+  const [r, g, b] = hexToRgb(LIGHT_COLOR);
+  gl.uniform4fv(colorUniformLocation, [r, g, b, 1]);
+  const [sr, sg, sb] = hexToRgb(LIGHT_COLOR_SECONDARY);
+  gl.uniform4fv(secondaryColorUniformLocation, [sr, sg, sb, 1]);
   let count = 0;
   waveData = new Float32Array(MAX_WAVES * 4);
   for (const wave of waveList) {

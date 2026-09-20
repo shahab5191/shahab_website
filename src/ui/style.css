@@ -394,7 +394,8 @@ button:hover {
   transition:
     width 0.25s ease-in-out,
     transform 0.25s ease-in-out,
-    opacity 0.3s ease-in-out;
+    opacity 0.3s ease-in-out,
+    background-color 0.3s ease-in-out;
 }
 
 .content.is-open .menu-collapse-bar {
@@ -403,7 +404,8 @@ button:hover {
 }
 
 .menu-collapse-bar:hover > .menu-collapse-bar-line {
-  transform: translateX(0.75rem);
+  transform: translateX(5px);
+  background-color: white;
   outline: none;
 }
 
