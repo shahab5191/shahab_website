@@ -464,14 +464,14 @@ button:hover {
   position: sticky;
   top: 0;
   margin-bottom: -100px;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
 }
 
 .content-view.scrolled::after {
   position: sticky;
   bottom: 0;
   margin-top: -100px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
 }
 
 .section-title {
@@ -667,4 +667,39 @@ button:hover {
   content: "•";
   margin-left: 0.6rem;
   color: #555;
+}
+
+.section--skills {
+  gap: 1.5rem;
+}
+
+.skills-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.skill-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.skill-group-title {
+  margin: 0;
+  padding: 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+.skill-group-items {
+  margin: 0;
+  padding: 0;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #ccc;
 }
