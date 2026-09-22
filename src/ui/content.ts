@@ -27,9 +27,15 @@ const triggers = Array.from(
 let activeSection: string | null = null;
 let switchToken = 0;
 
+function updateScrollState(): void {
+  const scrollable = contentViewInner.scrollHeight - contentView.clientHeight > 1;
+  contentView.classList.toggle("scrolled", scrollable);
+}
+
 function render(section: string): void {
   const template = templates.get(section);
   contentViewInner.replaceChildren();
+  contentView.scrollTop = 0;
   if (template) {
     contentViewInner.appendChild(template.content.cloneNode(true));
   } else {
@@ -62,6 +68,7 @@ function open(section: string): void {
     contentRoot.classList.add("is-open");
     document.body.classList.add("is-content-open");
     contentView.setAttribute("aria-hidden", "false");
+    updateScrollState();
     menu?.classList.add("is-compressed");
     return;
   }
@@ -73,6 +80,7 @@ function open(section: string): void {
     render(section);
     setActive(section);
     contentViewInner.classList.remove("is-fading");
+    updateScrollState();
   }, SWITCH_DURATION);
 }
 
@@ -85,6 +93,7 @@ function close(): void {
   contentRoot.classList.remove("is-open");
   document.body.classList.remove("is-content-open");
   contentView.setAttribute("aria-hidden", "true");
+  contentView.classList.remove("scrolled");
   menu?.classList.remove("is-compressed");
 
   contentViewInner.classList.add("is-fading");
@@ -109,3 +118,5 @@ collapseBar.addEventListener("click", close);
 window.addEventListener("keydown", (event) => {
   if (event.key === "Escape") close();
 });
+
+window.addEventListener("resize", updateScrollState);

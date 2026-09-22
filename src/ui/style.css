@@ -253,14 +253,13 @@ button:hover {
 .menu {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 1.9rem;
   align-items: flex-start;
   justify-content: center;
   list-style: none;
   padding: 0;
   margin: 0;
   width: max-content;
-  transition: gap 0.35s ease-in-out;
 }
 
 .menu .item {
@@ -274,7 +273,6 @@ button:hover {
   flex-direction: row;
   align-items: flex-start;
   justify-content: flex-start;
-  padding: 0.5rem 0;
   min-width: 0;
   letter-spacing: 0;
   transition:
@@ -311,22 +309,18 @@ button:hover {
   overflow: hidden;
   max-width: 24rem;
   opacity: 1;
+  transform: translateX(0);
   transition:
     max-width 0.35s ease-in-out,
-    opacity 0.3s ease-in-out;
-}
-
-.menu .item .item-label::before {
-  content: "//";
-  margin-right: 0.5rem;
-  margin-left: 0.5rem;
+    opacity 0.3s ease-in-out,
+    transform 0.35s ease-in-out;
 }
 
 .menu .item::after {
   content: attr(data-short);
   position: absolute;
   left: 0;
-  bottom: 0;
+  top: 0;
   color: #aaa;
   opacity: 0;
   transform: translateY(0.35rem);
@@ -338,7 +332,7 @@ button:hover {
 }
 
 .menu.is-compressed .item {
-  padding: 0 0 1.4rem 0;
+  padding: 0;
   min-width: 6rem;
   letter-spacing: 0.06em;
 }
@@ -353,14 +347,10 @@ button:hover {
   width: 0;
 }
 
-.menu.is-compressed .item .item-number {
-  color: #666;
-  transition: color 0.3s ease-in-out;
-}
-
 .menu.is-compressed .item .item-label {
   max-width: 0;
   opacity: 0;
+  transform: translateX(-0.5rem);
 }
 
 .menu.is-compressed .item::after {
@@ -368,8 +358,6 @@ button:hover {
   transform: translateY(0);
 }
 
-.menu.is-compressed .item:hover .item-number,
-.menu.is-compressed .item.is-active .item-number,
 .menu.is-compressed .item:hover::after,
 .menu.is-compressed .item.is-active::after {
   color: #ff7a00;
@@ -418,7 +406,7 @@ button:hover {
   top: 50%;
   left: 50%;
   z-index: 5;
-  width: min(640px, 70vw);
+  width: min(800px, 70vw);
   max-height: 60vh;
   overflow: auto;
   opacity: 0;
@@ -459,6 +447,31 @@ button:hover {
   align-items: flex-start;
   justify-content: center;
   gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+.content-view.scrolled::before,
+.content-view.scrolled::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 100px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.content-view.scrolled::before {
+  position: sticky;
+  top: 0;
+  margin-bottom: -100px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
+}
+
+.content-view.scrolled::after {
+  position: sticky;
+  bottom: 0;
+  margin-top: -100px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
 }
 
 .section-title {
@@ -515,4 +528,143 @@ button:hover {
   background-color: #ccc;
   margin-right: 1rem;
   margin-left: 1rem;
+}
+
+.section--experience {
+  gap: 1.5rem;
+}
+
+.experience-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  width: 100%;
+}
+
+.experience-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.experience-item-header {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.experience-company {
+  margin: 0;
+  padding: 0;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #fff;
+}
+
+.experience-role {
+  margin: 0;
+  padding: 0;
+  font-size: 0.85rem;
+  color: var(--color-primary);
+}
+
+.experience-dates {
+  margin: 0;
+  padding: 0;
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
+.experience-location {
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
+.experience-stack {
+  margin: 0.35rem 0 0 0;
+  padding: 0;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: #888;
+}
+
+.experience-bullets {
+  margin: 0.5rem 0 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.experience-bullets li {
+  position: relative;
+  padding-left: 1.25rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #ccc;
+}
+
+.experience-bullets li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--color-primary);
+}
+
+.experience-earlier {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.experience-earlier-title {
+  margin: 0;
+  padding: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #888;
+}
+
+.experience-earlier-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.experience-earlier-list li {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.6rem;
+  row-gap: 0.1rem;
+}
+
+.experience-earlier-list .experience-company {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: #fff;
+}
+
+.experience-earlier-list .experience-role {
+  font-size: 0.8rem;
+}
+
+.experience-earlier-list .experience-location,
+.experience-earlier-list .experience-dates {
+  font-size: 0.8rem;
+}
+
+.experience-earlier-list .experience-role::after {
+  content: "•";
+  margin-left: 0.6rem;
+  color: #555;
 }
