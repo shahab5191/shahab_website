@@ -675,9 +675,12 @@ button:hover {
 
 .skills-list {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 1.25rem;
   width: 100%;
+}
+.skills-list .skill-column{
+  width: 50%;
 }
 
 .skill-group {

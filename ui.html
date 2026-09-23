@@ -35,11 +35,8 @@
           <li class="item" data-section="skills" data-short="SKILLS">
             <span class="item-label">Skills</span>
           </li>
-          <li class="item" data-section="projects" data-short="PROJECTS">
-            <span class="item-label">Projects</span>
-          </li>
-          <li class="item" data-section="education" data-short="EDU">
-            <span class="item-label">Education & Training</span>
+          <li class="item" data-section="hobbies" data-short="HOBBIES">
+            <span class="item-label">Hobbies</span>
           </li>
         </ul>
         <button
@@ -249,86 +246,75 @@
       </section>
     </template>
     <template data-content="skills">
-      <section
-        class="section section--skills"
-        data-section-content="skills"
-      >
+      <section class="section section--skills" data-section-content="skills">
         <h2 class="section-title">Skills</h2>
         <div class="skills-list">
-          <div class="skill-group">
-            <p class="skill-group-title">Languages</p>
-            <p class="skill-group-items">
-              Python • TypeScript • JavaScript • Go • C/C++ • Rust • Java
-            </p>
+          <div class="skill-column">
+            <div class="skill-group">
+              <p class="skill-group-title">Languages</p>
+              <p class="skill-group-items">
+                Python • TypeScript • JavaScript • Go • C/C++ • Rust • Java
+              </p>
+            </div>
+            <div class="skill-group">
+              <p class="skill-group-title">Cloud (AWS)</p>
+              <p class="skill-group-items">
+                Lambda • SQS • S3 • SNS • EC2 • Bedrock • CloudWatch • ECR • IAM
+                • CDK • Terraform
+              </p>
+            </div>
+            <div class="skill-group">
+              <p class="skill-group-title">Data</p>
+              <p class="skill-group-items">
+                Snowflake • PostgreSQL • Redis • MongoDB • SQLAlchemy • Prisma
+              </p>
+            </div>
+            <div class="skill-group">
+              <p class="skill-group-title">Backend</p>
+              <p class="skill-group-items">
+                FastAPI • Node.js • Express • Flask • Django • GraphQL • gRPC •
+                RabbitMQ • Socket.io • Microservices
+              </p>
+            </div>
           </div>
-          <div class="skill-group">
-            <p class="skill-group-title">Cloud (AWS)</p>
-            <p class="skill-group-items">
-              Lambda • SQS • S3 • SNS • EC2 • Bedrock • CloudWatch • ECR • IAM •
-              CDK • Terraform
-            </p>
-          </div>
-          <div class="skill-group">
-            <p class="skill-group-title">Data</p>
-            <p class="skill-group-items">
-              Snowflake • PostgreSQL • Redis • MongoDB • SQLAlchemy • Prisma
-            </p>
-          </div>
-          <div class="skill-group">
-            <p class="skill-group-title">Backend</p>
-            <p class="skill-group-items">
-              FastAPI • Node.js • Express • Flask • Django • GraphQL • gRPC •
-              RabbitMQ • Socket.io • Microservices
-            </p>
-          </div>
-          <div class="skill-group">
-            <p class="skill-group-title">Frontend</p>
-            <p class="skill-group-items">
-              React • Next.js • Angular • Tailwind CSS • MUI • Vite
-            </p>
-          </div>
-          <div class="skill-group">
-            <p class="skill-group-title">AI / LLM</p>
-            <p class="skill-group-items">
-              Prompt Engineering • Claude (Anthropic) via AWS Bedrock • AI
-              Pipeline Architecture • Industrial AI Solutions • Spec-Driven
-              Development • LLM Integration
-            </p>
-          </div>
-          <div class="skill-group">
-            <p class="skill-group-title">Architecture</p>
-            <p class="skill-group-items">
-              Solution Architecture • Clean Architecture • System Design •
-              Event-Driven • Async Patterns • Serverless • API Design •
-              Industrial Data Platforms
-            </p>
-          </div>
-          <div class="skill-group">
-            <p class="skill-group-title">DevOps</p>
-            <p class="skill-group-items">
-              Docker • Kubernetes • GitLab CI/CD • Jenkins • GitHub Actions •
-              Linux • Bash
-            </p>
-          </div>
-          <div class="skill-group">
-            <p class="skill-group-title">Testing</p>
-            <p class="skill-group-items">
-              TDD/BDD • Pytest • Jest • Cypress • E2E Testing • Unittest
-            </p>
+          <div class="skill-column">
+            <div class="skill-group">
+              <p class="skill-group-title">Frontend</p>
+              <p class="skill-group-items">
+                React • Next.js • Angular • Tailwind CSS • MUI • Vite
+              </p>
+            </div>
+            <div class="skill-group">
+              <p class="skill-group-title">AI / LLM</p>
+              <p class="skill-group-items">
+                Prompt Engineering • Claude (Anthropic) via AWS Bedrock • AI
+                Pipeline Architecture • Industrial AI Solutions • Spec-Driven
+                Development • LLM Integration
+              </p>
+            </div>
+            <div class="skill-group">
+              <p class="skill-group-title">Architecture</p>
+              <p class="skill-group-items">
+                Solution Architecture • Clean Architecture • System Design •
+                Event-Driven • Async Patterns • Serverless • API Design •
+                Industrial Data Platforms
+              </p>
+            </div>
+            <div class="skill-group">
+              <p class="skill-group-title">DevOps</p>
+              <p class="skill-group-items">
+                Docker • Kubernetes • GitLab CI/CD • Jenkins • GitHub Actions •
+                Linux • Bash
+              </p>
+            </div>
           </div>
         </div>
       </section>
     </template>
-    <template data-content="projects">
-      <section class="section" data-section-content="projects">
-        <!-- projects content -->
-        <h2 class="section-title">Projects</h2>
-      </section>
-    </template>
-    <template data-content="education">
-      <section class="section" data-section-content="education">
-        <!-- education & training content -->
-        <h2 class="section-title">Education & Training</h2>
+    <template data-content="hobbies">
+      <section class="section" data-section-content="hobbies">
+        <!-- hobbies content -->
+        <h2 class="section-title">Hobbies</h2>
       </section>
     </template>
     <template data-content="contact">
