@@ -421,23 +421,49 @@ const SKILL_CATEGORIES: SkillCategory[] = [
   },
 ];
 
-function skillCategoryPiece(category: SkillCategory): Piece {
+function skillsOverviewPiece(categories: SkillCategory[]): Piece {
   return customPiece((inner) => {
-    const title = el("div", "skill-group-head");
-    const iconWrap = el("div", "piece-icon");
-    iconWrap.appendChild(icon(category.icon));
-    title.append(iconWrap, reveal(el("p", "skill-group-title", category.subtitle)));
-    inner.appendChild(title);
-    const row = el("div", "tool-row");
-    category.items.forEach((label) => {
-      const chip = el("span", "tool-chip");
-      const iconWrap = el("span", "tool-chip-icon");
-      iconWrap.appendChild(icon(iconForTool(label)));
-      chip.append(iconWrap, el("span", "tool-chip-name", label));
-      row.appendChild(reveal(chip));
+    const grid = el("div", "skill-blocks");
+    categories.forEach((category) => {
+      const block = el("div", "skill-block");
+      const head = el("div", "skill-block-head");
+      const iconWrap = el("span", "skill-block-icon");
+      iconWrap.appendChild(icon(category.icon));
+      head.append(iconWrap, el("span", "skill-block-title", category.subtitle));
+      block.appendChild(head);
+      const row = el("div", "tool-row");
+      category.items.forEach((label) => {
+        const chip = el("span", "tool-chip");
+        const chipIcon = el("span", "tool-chip-icon");
+        chipIcon.appendChild(icon(iconForTool(label)));
+        chip.append(chipIcon, el("span", "tool-chip-name", label));
+        row.appendChild(chip);
+      });
+      block.appendChild(row);
+      grid.appendChild(reveal(block));
     });
-    inner.appendChild(row);
+    inner.appendChild(grid);
   });
+}
+
+export function skillsPieces(perPage: number): Piece[] {
+  const chunks: SkillCategory[][] = [];
+  for (let i = 0; i < SKILL_CATEGORIES.length; i += perPage) {
+    chunks.push(SKILL_CATEGORIES.slice(i, i + perPage));
+  }
+  return [
+    duoPiece(
+      "I can sit in front of a screen for 18 hours straight.",
+      "Powered by coffee and the irrational belief that it's almost done.",
+      "coffee",
+    ),
+    duoPiece(
+      "Kidding aside.",
+      "Here are the tools I actually reach for when the work gets real.",
+      "spark",
+    ),
+    ...chunks.map((chunk) => skillsOverviewPiece(chunk)),
+  ];
 }
 
 export const SECTIONS: SectionDef[] = [
@@ -480,19 +506,7 @@ export const SECTIONS: SectionDef[] = [
     label: "Skills",
     title: "Skills",
     subtitle: "What I've used professionally",
-    pieces: [
-      duoPiece(
-        "I can sit in front of a screen for 18 hours straight.",
-        "Powered by coffee and the irrational belief that it's almost done.",
-        "coffee",
-      ),
-      duoPiece(
-        "Kidding aside.",
-        "Here are the tools I actually reach for when the work gets real.",
-        "spark",
-      ),
-      ...SKILL_CATEGORIES.map((category) => skillCategoryPiece(category)),
-    ],
+    pieces: skillsPieces(SKILL_CATEGORIES.length),
   },
   {
     id: "hobbies",

@@ -1,4 +1,5 @@
-import { SECTIONS } from "./sections";
+import { SECTIONS, skillsPieces } from "./sections";
+import type { SectionDef } from "./sections";
 import { iconMarkup } from "./icons";
 
 function byId<T extends HTMLElement>(id: string): T {
@@ -13,6 +14,23 @@ interface Chapter {
   title: HTMLElement;
   steps: number;
   pieces: HTMLElement[];
+  section: SectionDef;
+  stage: HTMLElement;
+  stepList: HTMLElement;
+}
+
+function desiredPerPage(): number {
+  const height = window.innerHeight;
+  if (height <= 680) return 2;
+  if (height <= 880) return 3;
+  return 9;
+}
+
+let currentPerPage = desiredPerPage();
+
+function sectionPieces(section: SectionDef) {
+  if (section.id === "skills") return skillsPieces(currentPerPage);
+  return section.pieces;
 }
 
 const menu = byId("menu");
@@ -62,7 +80,7 @@ SECTIONS.forEach((section) => {
   stage.className = "chapter-stage";
 
   const pieces: HTMLElement[] = [];
-  section.pieces.forEach((piece) => {
+  sectionPieces(section).forEach((piece) => {
     const node = piece.render();
     node.querySelectorAll<HTMLElement>(".reveal").forEach((reveal, index) => {
       reveal.style.setProperty("--i", String(index));
@@ -76,7 +94,7 @@ SECTIONS.forEach((section) => {
   viewport.appendChild(content);
   chapter.appendChild(viewport);
 
-  const steps = 2 + section.pieces.length;
+  const steps = 2 + sectionPieces(section).length;
   const stepList = document.createElement("div");
   stepList.className = "chapter-steps";
   stepList.setAttribute("aria-hidden", "true");
@@ -88,7 +106,16 @@ SECTIONS.forEach((section) => {
   chapter.appendChild(stepList);
 
   sectionsRoot.appendChild(chapter);
-  chapters.push({ id: section.id, el: chapter, title, steps, pieces });
+  chapters.push({
+    id: section.id,
+    el: chapter,
+    title,
+    steps,
+    pieces,
+    section,
+    stage,
+    stepList,
+  });
 });
 
 let ticking = false;
@@ -165,6 +192,30 @@ function scrollToChapter(index: number): void {
   if (!chapter) return;
   const top = chapter.el.getBoundingClientRect().top + window.scrollY;
   window.scrollTo({ top, behavior: "smooth" });
+}
+
+function rebuildChapter(chapter: Chapter): void {
+  const pieces = sectionPieces(chapter.section);
+  chapter.stage.replaceChildren();
+  chapter.stepList.replaceChildren();
+
+  const nodes: HTMLElement[] = [];
+  pieces.forEach((piece) => {
+    const node = piece.render();
+    node.querySelectorAll<HTMLElement>(".reveal").forEach((reveal, index) => {
+      reveal.style.setProperty("--i", String(index));
+    });
+    chapter.stage.appendChild(node);
+    nodes.push(node);
+  });
+  chapter.pieces = nodes;
+
+  chapter.steps = 2 + pieces.length;
+  for (let i = 0; i < chapter.steps; i++) {
+    const step = document.createElement("div");
+    step.className = "step";
+    chapter.stepList.appendChild(step);
+  }
 }
 
 const PET_SLOTS: Array<{ x: number; y: number }> = [
@@ -277,6 +328,15 @@ window.addEventListener(
 window.addEventListener("resize", () => {
   computeShifts();
   update();
+  const skills = chapters.find((chapter) => chapter.id === "skills");
+  if (!skills) return;
+  const target = desiredPerPage();
+  if (target !== currentPerPage) {
+    currentPerPage = target;
+    rebuildChapter(skills);
+    computeShifts();
+    update();
+  }
 });
 
 window.addEventListener("load", computeShifts);
