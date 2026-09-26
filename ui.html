@@ -8,6 +8,7 @@
   <body>
     <canvas id="background" class="background-canvas"></canvas>
     <div class="content-backdrop" aria-hidden="true"></div>
+
     <header class="header">
       <div class="header-name-container">
         <p class="header-name">shahab.cv</p>
@@ -20,309 +21,20 @@
         <a href="mailto:oveysi.shahab@gmail.com" class="header-contact"
           >oveysi.shahab@gmail.com</a
         >
-        <button id="contact-button" data-section="contact">Contact</button>
-      </div>
-    </header>
-    <div class="content" id="content">
-      <div class="menu-wrapper">
-        <ul class="menu">
-          <li class="item" data-section="about" data-short="ABOUT">
-            <span class="item-label">About me</span>
-          </li>
-          <li class="item" data-section="experience" data-short="EXP">
-            <span class="item-label">Experience</span>
-          </li>
-          <li class="item" data-section="skills" data-short="SKILLS">
-            <span class="item-label">Skills</span>
-          </li>
-          <li class="item" data-section="hobbies" data-short="HOBBIES">
-            <span class="item-label">Hobbies</span>
-          </li>
-        </ul>
-        <button
-          id="menu-collapse-bar"
-          class="menu-collapse-bar"
-          type="button"
-          aria-label="Expand menu and close content"
-        >
-          <span class="menu-collapse-bar-line"></span>
+        <button id="contact-button" data-nav data-section="contact">
+          Contact
         </button>
       </div>
-      <div id="content-view" class="content-view" aria-hidden="true">
-        <div id="content-view-inner" class="content-view-inner"></div>
-      </div>
-    </div>
+    </header>
 
-    <template data-content="about">
-      <section class="section" data-section-content="about">
-        <!-- about me content -->
-        <h2 class="section-title">About</h2>
-        <h3 class="section-header">
-          Building reliable systems for what's next.
-        </h3>
-        <p class="section-text">
-          Solution-oriented Senior Software Engineer and Tech Lead with 10+
-          years of experience designing scalable backend architectures and
-          integration for enterprise customers. Proven ability to partner
-          directly with product teams and stakeholders to translate complex
-          business challenges into reliable technical solutions. Strong
-          background in cloud platforms, automated workflows, AI-powered
-          systems, and driving engineering standards from discovery through
-          production deployment.
-        </p>
-        <div class="section-key">
-          <div class="section-key-item">
-            <p>ENGINEERING</p>
-            <p>SYSTEMS</p>
-            <p>DELIVERY</p>
-          </div>
-          <div class="section-menu-name">
-            <p>01 / ABOUT</p>
-          </div>
-        </div>
-      </section>
-    </template>
-    <template data-content="experience">
-      <section
-        class="section scrolled section--experience"
-        data-section-content="experience"
-      >
-        <h2 class="section-title">Experience</h2>
-        <div class="experience-list">
-          <article class="experience-item">
-            <header class="experience-item-header">
-              <h3 class="experience-company">Xeneta</h3>
-              <span class="experience-location">Norway - Hybrid</span>
-            </header>
-            <p class="experience-role">Senior Software Engineer</p>
-            <p class="experience-dates">Jan 2025 – Present</p>
-            <p class="experience-stack">
-              Python • FastAPI • AWS (Serverless &amp; Bedrock) • AI Workflows •
-              TypeScript • React • Snowflake • Terraform • Docker • GitLab CI/CD
-            </p>
-            <ul class="experience-bullets">
-              <li>
-                Solved a years-long industrial data problem: designed and built
-                an AI pipeline (AWS Bedrock) that automatically transforms
-                arbitrary customer freight rate sheets into a standardised
-                format. 100% data accuracy and 95% success rate across real
-                Fortune 500 customer files. Now a core product feature
-                delivering direct customer value.
-              </li>
-              <li>
-                Architected the IRM Rate Management System backend from
-                greenfield: designed system architecture, evaluated multiple
-                approaches, and delivered most features under aggressive
-                deadlines using Python/FastAPI and Snowflake.
-              </li>
-              <li>
-                Led cross-team integration to design a scalable rate-publishing
-                mechanism, ensuring real-time data consistency across the Xeneta
-                platform.
-              </li>
-              <li>
-                Led company-wide AI integration and enforced engineering
-                standards, accelerating technical delivery while eliminating
-                manual toil to prevent developer burnout.
-              </li>
-              <li>
-                Architected automated maintenance pipelines to ensure reliable
-                technical solutions, scaling bug fixes from 4 manual weekly
-                tickets to 7 fully automated resolutions per week.
-              </li>
-              <li>
-                Served as Acting Tech Lead: owned the technical roadmap,
-                decomposed epics into stories, assigned work, facilitated
-                ceremonies, and provided architectural guidance to keep the team
-                unblocked.
-              </li>
-              <li>
-                Delivered company-wide Tech Talks and transferred deep Snowflake
-                knowledge.
-              </li>
-              <li>
-                Engaged directly with customers: participated in customer calls
-                with the Product team to understand real operational needs and
-                translated them into well-scoped, deliverable technical
-                solutions, a core part of the solution architect role.
-              </li>
-            </ul>
-          </article>
+    <nav class="menu-wrapper" aria-label="Sections">
+      <ul class="menu" id="menu"></ul>
+    </nav>
 
-          <article class="experience-item">
-            <header class="experience-item-header">
-              <h3 class="experience-company">audEERING</h3>
-              <span class="experience-location">Germany - Remote</span>
-            </header>
-            <p class="experience-role">Senior Full Stack Engineer</p>
-            <p class="experience-dates">Jan 2024 – Dec 2024</p>
-            <p class="experience-stack">
-              Python • C# • Flask • FastAPI • AWS • PostgreSQL • Docker •
-              TypeScript • Angular • Unity • CDK • Lambda • SQS • S3 • Redis •
-              Pytest
-            </p>
-            <ul class="experience-bullets">
-              <li>
-                Architected and implemented scalable SQL database solution for
-                an AI-driven API; achieved 86%+ unit test coverage.
-              </li>
-              <li>
-                Engineered internal data-collection tools for data scientists,
-                streamlining AI model training pipelines.
-              </li>
-              <li>
-                Designed and implemented gRPC-based microservices; deployed via
-                Docker with GitLab CI/CD pipelines.
-              </li>
-              <li>
-                Implemented real-time WebSocket-based voice-to-voice AI
-                interaction and led a junior developer mentorship program.
-              </li>
-              <li>
-                Directed development of a web application showcasing AI models
-                using React and Unity (WebGL).
-              </li>
-            </ul>
-          </article>
+    <main class="sections" id="sections">
+      <section class="page page--hero" data-hero aria-hidden="true"></section>
+    </main>
 
-          <article class="experience-item">
-            <header class="experience-item-header">
-              <h3 class="experience-company">Diana vus</h3>
-              <span class="experience-location">Austria - Remote</span>
-            </header>
-            <p class="experience-role">Senior Full Stack Developer</p>
-            <p class="experience-dates">Dec 2020 – Jan 2024</p>
-            <p class="experience-stack">
-              React • Node.js • Express • Docker • Kubernetes • TypeScript • AWS
-              (Lambda, SNS, S3) • Redis • RabbitMQ • Prometheus • Jest • Cypress
-            </p>
-            <ul class="experience-bullets">
-              <li>
-                Developed and maintained applications that increased user
-                engagement; improved database query performance by 20%.
-              </li>
-              <li>
-                Authored OpenAPI documentation; had a key role in UI
-                development, testing, and RESTful API design.
-              </li>
-              <li>
-                Collaborated with designers and product owners to deliver
-                full-stack features across a Kubernetes-deployed microservices
-                platform.
-              </li>
-            </ul>
-          </article>
-        </div>
-
-        <div class="experience-earlier">
-          <p class="experience-earlier-title">Earlier</p>
-          <ul class="experience-earlier-list">
-            <li>
-              <span class="experience-company">Aviatrix</span>
-              <span class="experience-role">Full Stack Developer</span>
-              <span class="experience-location">Iran</span>
-              <span class="experience-dates">Dec 2019 – Nov 2020</span>
-            </li>
-            <li>
-              <span class="experience-company">Dina Group</span>
-              <span class="experience-role">Full Stack Developer</span>
-              <span class="experience-location">Iran</span>
-              <span class="experience-dates">Sep 2018 – Oct 2019</span>
-            </li>
-            <li>
-              <span class="experience-company">Freelance</span>
-              <span class="experience-role">Web Developer</span>
-              <span class="experience-location">Iran</span>
-              <span class="experience-dates">Aug 2017 – Oct 2018</span>
-            </li>
-            <li>
-              <span class="experience-company">Ab Niroo</span>
-              <span class="experience-role">Software Developer</span>
-              <span class="experience-location">Iran</span>
-              <span class="experience-dates">Nov 2015 – Feb 2017</span>
-            </li>
-          </ul>
-        </div>
-      </section>
-    </template>
-    <template data-content="skills">
-      <section class="section section--skills" data-section-content="skills">
-        <h2 class="section-title">Skills</h2>
-        <div class="skills-list">
-          <div class="skill-column">
-            <div class="skill-group">
-              <p class="skill-group-title">Languages</p>
-              <p class="skill-group-items">
-                Python • TypeScript • JavaScript • Go • C/C++ • Rust • Java
-              </p>
-            </div>
-            <div class="skill-group">
-              <p class="skill-group-title">Cloud (AWS)</p>
-              <p class="skill-group-items">
-                Lambda • SQS • S3 • SNS • EC2 • Bedrock • CloudWatch • ECR • IAM
-                • CDK • Terraform
-              </p>
-            </div>
-            <div class="skill-group">
-              <p class="skill-group-title">Data</p>
-              <p class="skill-group-items">
-                Snowflake • PostgreSQL • Redis • MongoDB • SQLAlchemy • Prisma
-              </p>
-            </div>
-            <div class="skill-group">
-              <p class="skill-group-title">Backend</p>
-              <p class="skill-group-items">
-                FastAPI • Node.js • Express • Flask • Django • GraphQL • gRPC •
-                RabbitMQ • Socket.io • Microservices
-              </p>
-            </div>
-          </div>
-          <div class="skill-column">
-            <div class="skill-group">
-              <p class="skill-group-title">Frontend</p>
-              <p class="skill-group-items">
-                React • Next.js • Angular • Tailwind CSS • MUI • Vite
-              </p>
-            </div>
-            <div class="skill-group">
-              <p class="skill-group-title">AI / LLM</p>
-              <p class="skill-group-items">
-                Prompt Engineering • Claude (Anthropic) via AWS Bedrock • AI
-                Pipeline Architecture • Industrial AI Solutions • Spec-Driven
-                Development • LLM Integration
-              </p>
-            </div>
-            <div class="skill-group">
-              <p class="skill-group-title">Architecture</p>
-              <p class="skill-group-items">
-                Solution Architecture • Clean Architecture • System Design •
-                Event-Driven • Async Patterns • Serverless • API Design •
-                Industrial Data Platforms
-              </p>
-            </div>
-            <div class="skill-group">
-              <p class="skill-group-title">DevOps</p>
-              <p class="skill-group-items">
-                Docker • Kubernetes • GitLab CI/CD • Jenkins • GitHub Actions •
-                Linux • Bash
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-    </template>
-    <template data-content="hobbies">
-      <section class="section" data-section-content="hobbies">
-        <!-- hobbies content -->
-        <h2 class="section-title">Hobbies</h2>
-      </section>
-    </template>
-    <template data-content="contact">
-      <section class="section" data-section-content="contact">
-        <!-- contact content -->
-        <h2 class="section-title">Contact</h2>
-      </section>
-    </template>
     <footer class="footer">
       <div class="footer-info-container">
         <div class="footer-info-name-container">
@@ -354,6 +66,7 @@
         >
       </div>
     </footer>
+
     <script type="module" src="/src/ui/main.ts"></script>
     <script>
       const terminalModeButton = document.getElementById("terminal-mode");
