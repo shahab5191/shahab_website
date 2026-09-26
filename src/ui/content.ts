@@ -98,7 +98,7 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function updateMenu(index: number): void {
-  const id = index >= 0 ? chapters[index]?.id ?? null : null;
+  const id = index >= 0 ? (chapters[index]?.id ?? null) : null;
   menu.querySelectorAll<HTMLElement>(".item").forEach((item) => {
     item.classList.toggle("is-active", item.dataset.section === id);
   });
@@ -168,25 +168,23 @@ function scrollToChapter(index: number): void {
 }
 
 const PET_SLOTS: Array<{ x: number; y: number }> = [
-  { x: 31, y: 16 },
-  { x: 43, y: 11 },
-  { x: 54, y: 18 },
-  { x: 36, y: 39 },
-  { x: 51, y: 37 },
+  { x: 25, y: 16 },
+  { x: 40, y: 10 },
+  { x: 53, y: 18 },
+  { x: 30, y: 50 },
+  { x: 43, y: 49 },
 ];
 
-const PETS: Array<"cat" | "dog"> = ["cat", "cat", "cat", "dog", "dog"];
+const PETS: Array<string> = [
+  "hati.jpg",
+  "medad-mioo.jpg",
+  "zardaloo-medad.jpg",
+  "zomi.jpg",
+  "zardaloo-medad-mioo.jpg",
+];
 
-function petImage(kind: "cat" | "dog"): string {
-  const hue = kind === "cat" ? 30 : 205;
-  const paw = iconMarkup("paw");
-  const svg =
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">' +
-    `<rect width="240" height="240" fill="hsl(${hue},22%,15%)"/>` +
-    `<g transform="translate(60 56) scale(5)" fill="none" stroke="hsl(${hue},60%,62%)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${paw}</g>` +
-    `<text x="120" y="224" font-family="monospace" font-size="13" fill="#8a8a8a" text-anchor="middle" letter-spacing="3">${kind.toUpperCase()}</text>` +
-    "</svg>";
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+function petImage(name: string): string {
+  return `/pets/${name}`;
 }
 
 let photosRoot: HTMLElement | null = null;
@@ -195,7 +193,7 @@ function spawnPhotos(): void {
   removePhotos();
   const root = document.createElement("div");
   root.className = "photos";
-  PETS.forEach((kind, index) => {
+  PETS.forEach((name, index) => {
     const slot = PET_SLOTS[index]!;
     const jitterX = (Math.random() - 0.5) * 6;
     const jitterY = (Math.random() - 0.5) * 6;
@@ -209,13 +207,13 @@ function spawnPhotos(): void {
     photo.style.setProperty("--d", String(index));
 
     const image = document.createElement("img");
-    image.src = petImage(kind);
-    image.alt = kind;
+    image.src = petImage(name);
+    image.alt = name;
     image.draggable = false;
 
     const caption = document.createElement("figcaption");
     caption.className = "polaroid-caption";
-    caption.textContent = kind;
+    caption.textContent = name.split(".")[0] || name;
 
     photo.append(image, caption);
     root.appendChild(photo);
